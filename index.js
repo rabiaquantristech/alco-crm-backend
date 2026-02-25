@@ -1,0 +1,42 @@
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+// import routes
+const authRoute = require("./routes/authRoute");
+
+const app = express();
+
+// Middlewares
+app.use(express.json());
+app.use(cors());
+
+const DB_URI =
+process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
+console.log(DB_URI);
+
+// Basic Test Route
+app.use("/api/auth", authRoute);
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "ALCO CRM Backend Running Successfully 🚀",
+  });
+});
+
+mongoose
+  .connect(DB_URI)
+  .then(() => {
+    console.log("✅ Database Connected Successfully");
+
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(
+        `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
+      );
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Database connection error:", err.message);
+  });
+
+module.exports = app;
