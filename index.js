@@ -60,8 +60,7 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(cors({
-  origin: process.env.BASE_URL || process.env.LOCAL_BASE_URL,
-  credentials: true
+  origin: process.env.BASE_URL || process.env.LOCAL_BASE_URL
 }));
 
 // Routes
