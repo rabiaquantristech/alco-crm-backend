@@ -59,9 +59,7 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
-app.use(cors({
-  origin: process.env.BASE_URL || process.env.LOCAL_BASE_URL
-}));
+app.use(cors());
 
 // Routes
 app.use("/api/auth", authRoute);
