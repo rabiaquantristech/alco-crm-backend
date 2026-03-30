@@ -13,8 +13,8 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: [
-    "process.env.LOCAL_BASE_URL",
-    "process.env.BASE_URL"
+    process.env.BASE_URL,
+    process.env.LOCAL_BASE_URL
   ],
   credentials: true
 }));
