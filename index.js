@@ -4,19 +4,26 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 // import routes
 const authRoute = require("./routes/authRoute");
+const userRoute = require("./routes/userRoute");
+const adminRoute = require("./routes/adminRoute");
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 
 const DB_URI =
-process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
-console.log(DB_URI);
+// process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
+// console.log(DB_URI);
 
 // Basic Test Route
 app.use("/api/auth", authRoute);
+app.use("/api/users", userRoute);
+app.use("/api/admin", adminRoute);
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -25,7 +32,7 @@ app.get("/", (req, res) => {
 });
 
 mongoose
-  .connect(DB_URI)
+  .connect(process.env.ATLAS_URL)
   .then(() => {
     console.log("✅ Database Connected Successfully");
 

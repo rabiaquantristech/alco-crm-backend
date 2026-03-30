@@ -14,12 +14,34 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
     role: {
       type: String,
-      enum: ["admin", "subadmin", "user"],
+      enum: ["admin", "relationship-manager", "sales", "support", "user"],
       default: "user",
     },
+    permissions: {
+      type: [String],
+      default: []
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+      default: null
+    },
+    permissions: {
+      type: [String],
+      default: []
+    },
+    verificationToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    resetPasswordAttempts: { type: Number, default: 0 }
+
   },
   { timestamps: true }
 );
