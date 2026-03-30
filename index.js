@@ -19,10 +19,6 @@ app.use(cors({
   credentials: true
 }));
 
-const DB_URI =
-  // process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
-  // console.log(DB_URI);
-
   // Basic Test Route
   app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
