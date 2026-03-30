@@ -12,16 +12,19 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    "process.env.LOCAL_BASE_URL",
+    "process.env.BASE_URL"
+  ],
   credentials: true
 }));
 
 const DB_URI =
-// process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
-// console.log(DB_URI);
+  // process.env.NODE_ENV === "production" ? process.env.ATLAS_URL : process.env.LOCAL_URL
+  // console.log(DB_URI);
 
-// Basic Test Route
-app.use("/api/auth", authRoute);
+  // Basic Test Route
+  app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/admin", adminRoute);
 app.get("/", (req, res) => {
