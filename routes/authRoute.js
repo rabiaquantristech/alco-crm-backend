@@ -29,13 +29,31 @@ router.get(
     failureRedirect: "/login",
   }),
   (req, res) => {
-    const token = generateToken(req.user);
-    const frontend = process.env.LOCAL_FRONTEND_URL; // FRONTEND URL
-    res.redirect(
-      `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
-        JSON.stringify(req.user)
-      )}`
-    );
+    try {
+      const generateToken = require("../utils/generateToken.js");
+
+      const token = generateToken(req.user);
+      const frontend = process.env.LOCAL_FRONTEND_URL;
+
+      if (!frontend) {
+        throw new Error("FRONTEND_URL not defined");
+      }
+
+      const userData = encodeURIComponent(
+        JSON.stringify({
+          _id: req.user._id,
+          name: req.user.name,
+          email: req.user.email,
+        })
+      );
+
+      res.redirect(
+        `${frontend}/auth/callback?token=${token}&user=${userData}`
+      );
+    } catch (error) {
+      console.error("Google Callback Error:", error);
+      res.status(500).json({ message: "OAuth failed", error: error.message });
+    }
   }
 );
 
