@@ -1,9 +1,9 @@
-const User = require("../models/userModel");
+const User = require("../models/userModel.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const generateToken = require("../utils/generateToken");
-const sendEmail = require("../utils/sendEmail");
+const generateToken = require("../utils/generateToken.js");
+const sendEmail = require("../utils/sendEmail.js");
 
 
 // REGISTER 

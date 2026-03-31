@@ -3,9 +3,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 // import routes
-const authRoute = require("./routes/authRoute");
-const userRoute = require("./routes/userRoute");
-const adminRoute = require("./routes/adminRoute");
+const authRoute = require("./routes/authRoute.js");
+const userRoute = require("./routes/userRoute.js");
+const adminRoute = require("./routes/adminRoute.js");
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(express.json());
 // }));
 app.use(cors({
   origin: "*",  
-  credentials: false  
+  credentials: false 
 }));
 
 // Basic Test Route
