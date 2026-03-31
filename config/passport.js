@@ -51,12 +51,12 @@ passport.use(
     {
       clientID: process.env.LINKEDIN_CLIENT_ID,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`, // FULL URL
-      scope: ["r_emailaddress", "r_liteprofile"],
+      callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
+      scope: ["openid", "profile", "email"],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value;
+        const email = profile.emails?.[0]?.value || profile.email;
         let user = await User.findOne({ email });
 
         if (!user) {
