@@ -61,17 +61,22 @@ router.get(
 );
 
 // ================= LINKEDIN AUTH =================
-router.get("/linkedin", passport.authenticate("linkedin"));
+// LinkedIn initiate
+router.get(
+  "/linkedin",
+  passport.authenticate("linkedin-oidc")
+);
 
+// LinkedIn callback
 router.get(
   "/linkedin/callback",
-  passport.authenticate("linkedin", {
+  passport.authenticate("linkedin-oidc", {
     session: false,
     failureRedirect: "/login",
   }),
   (req, res) => {
     const token = generateToken(req.user);
-    const frontend = process.env.LOCAL_FRONTEND_URL; // FRONTEND URL
+    const frontend = process.env.CRM_FRONTEND_URL;
     res.redirect(
       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
         JSON.stringify(req.user)

@@ -1,6 +1,6 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
+const { Strategy: LinkedInOIDCStrategy } = require("passport-linkedin-oidc");
 const User = require("../models/userModel.js");
 
 passport.serializeUser((user, done) => {
@@ -45,18 +45,19 @@ passport.use(
   )
 );
 
-// ================= LINKEDIN =================
+// ================= LINKEDIN OIDC =================
 passport.use(
-  new LinkedInStrategy(
+  new LinkedInOIDCStrategy(
     {
       clientID: process.env.LINKEDIN_CLIENT_ID,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`, // FULL URL
-      scope: ["r_emailaddress", "r_liteprofile"],
+      callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
+      scope: ["openid", "profile", "email"],
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (issuer, profile, done) => {
       try {
-        const email = profile.emails[0].value;
+        const email = profile.emails?.[0]?.value || profile.email;
+
         let user = await User.findOne({ email });
 
         if (!user) {
