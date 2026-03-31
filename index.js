@@ -11,12 +11,16 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
+// app.use(cors({
+//   origin: [
+//     process.env.BASE_URL,
+//     process.env.LOCAL_BASE_URL
+//   ],
+//   credentials: true
+// }));
 app.use(cors({
-  origin: [
-    process.env.BASE_URL,
-    process.env.LOCAL_BASE_URL
-  ],
-  credentials: true
+  origin: "*",  
+  credentials: false  
 }));
 
 // Basic Test Route
@@ -35,11 +39,11 @@ mongoose
   .then(() => {
     console.log("✅ Database Connected Successfully");
 
-    app.listen(process.env.PORT || 5000, () => {
-      console.log(
-        `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
-      );
-    });
+    // app.listen(process.env.PORT || 5000, () => {
+    //   console.log(
+    //     `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
+    //   );
+    // });
   })
   .catch((err) => {
     console.error("❌ Database connection error:", err.message);
