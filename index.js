@@ -19,8 +19,8 @@ app.use(express.json());
 //   credentials: true
 // }));
 app.use(cors({
-  origin: "*",  
-  credentials: false 
+  origin: "*",
+  credentials: false
 }));
 
 // Basic Test Route
@@ -35,7 +35,10 @@ app.get("/", (req, res) => {
 });
 
 mongoose
-  .connect(process.env.ATLAS_URL)
+  .connect(process.env.ATLAS_URL, {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+  })
   .then(() => {
     console.log("✅ Database Connected Successfully");
 
@@ -44,6 +47,9 @@ mongoose
     //     `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
     //   );
     // });
+  }, {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
   })
   .catch((err) => {
     console.error("❌ Database connection error:", err.message);
