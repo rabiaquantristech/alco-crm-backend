@@ -5,7 +5,6 @@ const crypto = require("crypto");
 const generateToken = require("../utils/generateToken.js");
 const sendEmail = require("../utils/sendEmail.js");
 
-
 // REGISTER 
 exports.register = async (req, res) => {
   try {
