@@ -3,6 +3,7 @@ const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
 const authController = require("../controllers/authController.js");
 const passport = require("../config/passport.js");
+const generateToken = require("../utils/generateToken.js");
 
 const router = express.Router();
 
@@ -30,13 +31,12 @@ router.get(
   }),
   (req, res) => {
     try {
-      const generateToken = require("../utils/generateToken.js");
-
       const token = generateToken(req.user);
+
       const frontend = process.env.LOCAL_FRONTEND_URL;
 
       if (!frontend) {
-        throw new Error("FRONTEND_URL not defined");
+        throw new Error("FRONTEND_URL is missing");
       }
 
       const userData = encodeURIComponent(
@@ -47,12 +47,15 @@ router.get(
         })
       );
 
-      res.redirect(
+      return res.redirect(
         `${frontend}/auth/callback?token=${token}&user=${userData}`
       );
     } catch (error) {
-      console.error("Google Callback Error:", error);
-      res.status(500).json({ message: "OAuth failed", error: error.message });
+      console.error("🔥 Google Callback Error:", error);
+      return res.status(500).json({
+        message: "OAuth failed",
+        error: error.message,
+      });
     }
   }
 );
