@@ -30,7 +30,7 @@ router.get(
   }),
   (req, res) => {
     const token = generateToken(req.user);
-    const frontend = process.env.LOCAL_BASE_URL;
+    const frontend = process.env.BACKEND_BASE_URL;
     res.redirect(
       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
         JSON.stringify(req.user)
@@ -53,7 +53,7 @@ router.get(
   }),
   (req, res) => {
     const token = generateToken(req.user);
-    const frontend = process.env.LOCAL_BASE_URL;
+    const frontend = process.env.BACKEND_BASE_URL;
     res.redirect(
       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
         JSON.stringify(req.user)
