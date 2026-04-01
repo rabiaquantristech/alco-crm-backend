@@ -1,6 +1,6 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
+// const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
 const User = require("../models/userModel.js");
 
 passport.serializeUser((user, done) => {
@@ -46,35 +46,35 @@ passport.use(
 );
 
 // ================= LINKEDIN =================
-passport.use(
-  new LinkedInStrategy(
-    {
-      clientID: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
-      scope: ["openid", "profile", "email"],
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value || profile.email;
-        let user = await User.findOne({ email });
+// passport.use(
+//   new LinkedInStrategy(
+//     {
+//       clientID: process.env.LINKEDIN_CLIENT_ID,
+//       clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+//       callbackURL: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
+//       scope: ["openid", "profile", "email"],
+//     },
+//     async (accessToken, refreshToken, profile, done) => {
+//       try {
+//         const email = profile.emails?.[0]?.value || profile.email;
+//         let user = await User.findOne({ email });
 
-        if (!user) {
-          user = await User.create({
-            name: profile.displayName,
-            email,
-            isVerified: true,
-            password: "oauth_linkedin",
-          });
-        }
+//         if (!user) {
+//           user = await User.create({
+//             name: profile.displayName,
+//             email,
+//             isVerified: true,
+//             password: "oauth_linkedin",
+//           });
+//         }
 
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
-      }
-    }
-  )
-);
+//         return done(null, user);
+//       } catch (err) {
+//         return done(err, null);
+//       }
+//     }
+//   )
+// );
 
 module.exports = passport;
 

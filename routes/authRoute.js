@@ -4,6 +4,7 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 const authController = require("../controllers/authController.js");
 const passport = require("../config/passport.js");
 const generateToken = require("../utils/generateToken.js");
+const { default: axios } = require("axios");
 
 const router = express.Router();
 
@@ -61,24 +62,91 @@ router.get(
 );
 
 // ================= LINKEDIN AUTH =================
-router.get("/linkedin", passport.authenticate("linkedin"));
+// router.get("/linkedin", passport.authenticate("linkedin"));
 
-router.get(
-  "/linkedin/callback",
-  passport.authenticate("linkedin", {
-    session: false,
-    failureRedirect: "/login",
-  }),
-  (req, res) => {
-    const token = generateToken(req.user);
-    const frontend = process.env.CRM_FRONTEND_URL; // FRONTEND URL
+// router.get(
+//   "/linkedin/callback",
+//   passport.authenticate("linkedin", {
+//     session: false,
+//     failureRedirect: "/login",
+//   }),
+//   (req, res) => {
+//     const token = generateToken(req.user);
+//     const frontend = process.env.CRM_FRONTEND_URL; // FRONTEND URL
+//     res.redirect(
+//       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
+//         JSON.stringify(req.user)
+//       )}`
+//     );
+//   }
+// );
+
+// LinkedIn initiate
+router.get("/linkedin", (req, res) => {
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: process.env.LINKEDIN_CLIENT_ID,
+    redirect_uri: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
+    scope: "openid profile email",
+  });
+  res.redirect(`https://www.linkedin.com/oauth/v2/authorization?${params}`);
+});
+
+// LinkedIn callback
+router.get("/linkedin/callback", async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.redirect(`${process.env.CRM_FRONTEND_URL}/login?error=linkedin_failed`);
+  }
+
+  try {
+    // Step 1: Token lo
+    const tokenRes = await axios.post(
+      "https://www.linkedin.com/oauth/v2/accessToken",
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: `${process.env.BACKEND_BASE_URL}/api/auth/linkedin/callback`,
+        client_id: process.env.LINKEDIN_CLIENT_ID,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    const accessToken = tokenRes.data.access_token;
+
+    // Step 2: User profile lo
+    const profileRes = await axios.get("https://api.linkedin.com/v2/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const { name, email } = profileRes.data;
+
+    // Step 3: User find ya create karo
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        isVerified: true,
+        password: "oauth_linkedin",
+      });
+    }
+
+    // Step 4: Token generate aur redirect
+    const token = generateToken(user);
+    const frontend = process.env.CRM_FRONTEND_URL;
     res.redirect(
       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
-        JSON.stringify(req.user)
+        JSON.stringify(user)
       )}`
     );
+  } catch (err) {
+    console.error("LinkedIn OAuth error:", err.response?.data || err.message);
+    res.redirect(`${process.env.CRM_FRONTEND_URL}/login?error=linkedin_failed`);
   }
-);
+});
 
 // ================= DASHBOARD ROUTES =================
 router.get("/admin-dashboard", protect, authorize("admin"), (req, res) => {
