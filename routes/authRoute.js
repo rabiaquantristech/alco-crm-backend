@@ -33,7 +33,7 @@ router.get(
     try {
       const token = generateToken(req.user);
 
-      const frontend = process.env.BACKEND_BASE_URL;
+      const frontend = process.env.CMS_FRONTEND_URL;
 
       if (!frontend) {
         throw new Error("FRONTEND_URL is missing");
@@ -71,7 +71,7 @@ router.get(
   }),
   (req, res) => {
     const token = generateToken(req.user);
-    const frontend = process.env.BACKEND_BASE_URL; // FRONTEND URL
+    const frontend = process.env.CMS_FRONTEND_URL; // FRONTEND URL
     res.redirect(
       `${frontend}/auth/callback?token=${token}&user=${encodeURIComponent(
         JSON.stringify(req.user)
