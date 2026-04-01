@@ -2,7 +2,7 @@ const User = require("../models/userModel.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const generateToken = require("../utils/generateToken.js");
+const { generateToken, generateRefreshToken } = require("../utils/generateToken.js");
 const sendEmail = require("../utils/sendEmail.js");
 
 // REGISTER 
@@ -27,7 +27,8 @@ exports.register = async (req, res) => {
       isVerified: false,
     });
 
-    const verificationUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    // const verificationUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    const verificationUrl = `${process.env.BACKEND_BASE_URL}/api/auth/verify-email/${verificationToken}`
 
     // ✅ VERIFY EMAIL TEMPLATE use karo (registration nahi)
     await sendEmail({
@@ -52,36 +53,91 @@ exports.register = async (req, res) => {
 };
 
 // LOGIN
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     const user = await User.findOne({ email }).select("+password");
+
+//     if (!user) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
+
+//     // ✅ Check verification AFTER fetching user
+//     if (!user.isVerified) {
+//       return res.status(401).json({
+//         message: "Please verify your email first"
+//       });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
+
+//     await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+//     const token = jwt.sign(
+//       { id: user._id, role: user.role },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+
+//     await sendEmail({
+//       to: user.email,
+//       subject: "New Login Alert 🔐",
+//       templateName: "login",
+//       replacements: {
+//         UserName: user.name,
+//         SecurityLink: "http://localhost:3000/security",
+//         YourCompanyName: "Al-and-cp"
+//       }
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       token,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role
+//       }
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ✅ Check verification AFTER fetching user
     if (!user.isVerified) {
-      return res.status(401).json({
-        message: "Please verify your email first"
-      });
+      return res.status(401).json({ message: "Please verify your email first" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    // ✅ YAHAN SE NEW CODE START HOTA HAI
+    const access_token = generateToken(user);
+    const refresh_token = generateRefreshToken(user);
+
+    user.refreshToken = refresh_token;
+    await user.save();
+    // ✅ YAHAN TAK NEW CODE HAI
 
     await sendEmail({
       to: user.email,
@@ -94,15 +150,21 @@ exports.login = async (req, res) => {
       }
     });
 
+    // ✅ RESPONSE BHI REPLACE KARO
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+      data: {
+        access_token,
+        refresh_token,
+        token_type: "Bearer",
+        expires_in: 3600,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
       }
     });
 
@@ -242,11 +304,86 @@ exports.verifyEmail = async (req, res) => {
 // LOGOUT
 exports.logout = async (req, res) => {
   try {
+    // refreshToken DB se hata do
+    await User.findByIdAndUpdate(req.user.id, { refreshToken: null });
+
     res.status(200).json({
       success: true,
       message: "Logged out successfully"
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// REFRESH TOKEN
+exports.refreshToken = async (req, res) => {
+  const { refresh_token } = req.body;
+
+  if (!refresh_token) {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Refresh token required",
+      },
+    });
+  }
+
+  try {
+    // Token verify karo
+    const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET);
+
+    // User DB mein check karo
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "User not found",
+        },
+      });
+    }
+
+    // Check karo token DB mein stored hai ya nahi (optional but recommended)
+    if (user.refreshToken !== refresh_token) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid refresh token",
+        },
+      });
+    }
+
+    // Naye tokens banao
+    const newAccessToken = generateToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    // Naya refresh token DB mein save karo
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+        token_type: "Bearer",
+        expires_in: 3600,
+      },
+    });
+
+  } catch (error) {
+    // Token expired ya invalid
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Refresh token expired or invalid. Please login again.",
+      },
+    });
   }
 };
