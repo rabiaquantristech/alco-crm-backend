@@ -9,12 +9,12 @@ const User = require("../models/userModel.js");
 
 const router = express.Router();
 
-// const FRONTEND =
-//   process.env.NODE_ENV === "production"
-//     ? process.env.CRM_FRONTEND_URL
-//     : process.env.LOCAL_FRONTEND_URL;
+const FRONTEND =
+  process.env.NODE_ENV === "production"
+    ? process.env.CRM_FRONTEND_URL
+    : process.env.LOCAL_FRONTEND_URL;
 
-const FRONTEND = process.env.CRM_FRONTEND_URL;
+// const FRONTEND = process.env.CRM_FRONTEND_URL;
 
 // ================= NORMAL AUTH =================
 router.post("/register", authController.register);
