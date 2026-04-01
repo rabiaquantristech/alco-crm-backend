@@ -1,13 +1,33 @@
+// const jwt = require("jsonwebtoken");
+
+// const generateToken = (user) => {
+//   return jwt.sign(
+//     {
+//       id: user._id,
+//       role: user.role,
+//     },
+//     process.env.JWT_SECRET,
+//     { expiresIn: "1d" }
+//   );
+// };
+
+// const generateRefreshToken = (user) => {
+//   return jwt.sign(
+//     { id: user._id },
+//     process.env.JWT_REFRESH_SECRET,
+//     { expiresIn: "7d" }
+//   );
+// };
+
+// module.exports = { generateToken, generateRefreshToken };
+
 const jwt = require("jsonwebtoken");
 
 const generateToken = (user) => {
   return jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "1h" }
   );
 };
 
@@ -19,4 +39,4 @@ const generateRefreshToken = (user) => {
   );
 };
 
-module.exports = { generateToken, generateRefreshToken };
+module.exports = { generateToken, generateRefreshToken }; // ✅ named exports

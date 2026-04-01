@@ -3,7 +3,7 @@ const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
 const authController = require("../controllers/authController.js");
 const passport = require("../config/passport.js");
-const generateToken = require("../utils/generateToken.js");
+const { generateToken } = require("../utils/generateToken.js");
 const { default: axios } = require("axios");
 
 const router = express.Router();
