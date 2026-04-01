@@ -6,6 +6,8 @@ const passport = require("../config/passport.js");
 const { generateToken } = require("../utils/generateToken.js");
 const { default: axios } = require("axios");
 
+const User = require("../models/userModel.js");
+
 const router = express.Router();
 
 // ================= NORMAL AUTH =================
@@ -15,6 +17,8 @@ router.get("/me", protect, authController.getMe);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.get("/verify-email/:token", authController.verifyEmail);
+router.post("/resend-verification", authController.resendVerification);
+router.post("/refresh", authController.refreshToken);
 
 router.post("/logout", protect, authController.logout);
 

@@ -387,3 +387,45 @@ exports.refreshToken = async (req, res) => {
     });
   }
 };
+
+// ✅ RESEND VERIFICATION EMAIL
+exports.resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    // Naya token banao
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    const verificationUrl = `${process.env.BACKEND_BASE_URL}/api/auth/verify-email/${verificationToken}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your email ✅",
+      templateName: "verify",
+      replacements: {
+        UserName: user.name,
+        VerifyLink: verificationUrl,
+        YourCompanyName: "Al-and-cp",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email sent again",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
