@@ -123,8 +123,8 @@ exports.updateUser = async (req, res) => {
         replacements: {
           UserName: existingUser.name,
           ChangedRows: changedRows,
-          SupportEmail: "support@yourapp.com",
-          YourCompanyName: "Al-and-cp",
+          SupportEmail: "connect@arslanlarik.com",
+          YourCompanyName: "Al-and-co",
         },
       });
     }
@@ -271,7 +271,7 @@ exports.changeUserPassword = async (req, res) => {
         UserName: user.name,
         ChangedBy: "Admin",
         DateTime: new Date().toLocaleString(),
-        SupportEmail: "alco@support.com",
+        SupportEmail: "connect@arslanlarik.com",
         YourCompanyName: "Al-and-co",
       },
     });
