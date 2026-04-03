@@ -53,8 +53,7 @@ app.get("/", (req, res) => {
 mongoose
   .connect(process.env.ATLAS_URL, {
   serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-    bufferCommands: false,
+  socketTimeoutMS: 45000
   })
   .then(() => {
   console.log("✅ Database Connected Successfully");
