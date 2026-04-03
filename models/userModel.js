@@ -6,37 +6,66 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
     },
+
     password: {
       type: String,
       required: true,
       select: false,
     },
+
     role: {
       type: String,
-      enum: ["admin", "relationship-manager", "sales", "support", "user"],
+      // enum: ["admin", "sales_manager", "sales", "support", "user"],
+      enum: [
+        "super_admin",
+        "admin",
+        "sales_manager",
+        "sales_rep",
+        "support",
+        "user"
+      ],
+
       default: "user",
+
     },
-    permissions: {
-      type: [String],
-      default: []
-    },
+
     isVerified: {
       type: Boolean,
       default: false,
     },
-    lastLogin: {
-      type: Date,
-      default: null
+
+    isActive: {
+      type: Boolean,
+      default: false,
     },
+
     permissions: {
       type: [String],
       default: []
     },
+
+    avatarColor: {
+      type: String,
+      default: null
+    },
+
+    lastLogin: {
+      type: Date,
+      default: null
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     verificationToken: String,
     resetPasswordToken: String,
     resetPasswordExpire: Date,

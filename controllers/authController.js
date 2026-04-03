@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { generateToken, generateRefreshToken } = require("../utils/generateToken.js");
 const sendEmail = require("../utils/sendEmail.js");
+const generateColor = require("../utils/generateColor");
 
 // REGISTER 
 exports.register = async (req, res) => {
@@ -18,6 +19,8 @@ exports.register = async (req, res) => {
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
+    const avatarColor = generateColor(email);
+
     const user = await User.create({
       name,
       email,
@@ -25,6 +28,8 @@ exports.register = async (req, res) => {
       role,
       verificationToken,
       isVerified: false,
+      isActive: false,
+      avatarColor
     });
 
     // const verificationUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;

@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/sendEmail.js");
 const User = require("../models/userModel.js");
 const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
+const generateColor = require("../utils/generateColor");
 
 // ✅ GET ALL USERS (ADMIN ONLY)
 exports.getAllUsers = async (req, res) => {
@@ -169,12 +170,15 @@ exports.createUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const avatarColor = generateColor(email);
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role: role || "user",
       isVerified: true, // admin se banaya toh directly verified
+      avatarColor
     });
 
     res.status(201).json({
@@ -197,7 +201,7 @@ exports.assignRole = async (req, res) => {
   try {
     const { role } = req.body;
 
-    const allowedRoles = ["user", "admin", "relationship-manager", "instructor", "student"];
+    const allowedRoles = ["user", "admin", "sales_manager", "instructor", "student"];
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }

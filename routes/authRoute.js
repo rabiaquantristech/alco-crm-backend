@@ -160,7 +160,7 @@ router.get("/admin-dashboard", protect, authorize("admin"), (req, res) => {
 router.get(
   "/manager-dashboard",
   protect,
-  authorize("admin", "relationship-manager"),
+  authorize("admin", "sales_manager"),
   (req, res) => {
     res.json({ message: "Welcome Manager" });
   }
@@ -241,7 +241,7 @@ module.exports = router;
 // router.get(
 //   "/manager-dashboard",
 //   protect,
-//   authorize("admin", "relationship-manager"),
+//   authorize("admin", "sales_manager"),
 //   (req, res) => {
 //     res.json({ message: "Welcome Manager" });
 //   }
@@ -322,7 +322,7 @@ module.exports = router;
 // router.get(
 //   "/manager-dashboard",
 //   protect,
-//   authorize("admin", "relationship-manager"),
+//   authorize("admin", "sales_manager"),
 //   (req, res) => {
 //     res.json({ message: "Welcome Manager" });
 //   }
