@@ -39,11 +39,34 @@ const leadSchema = new mongoose.Schema(
       default: null,
     },
 
+    activities: [
+      {
+        activity_type: {
+          type: String,
+          enum: ["call", "email", "meeting", "note"],
+        },
+        title: String,
+        description: String,
+        call_duration_minutes: Number,
+        call_outcome: String,
+        created_by: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
+    lost_reason: String,
+    lost_notes: String,
     notes: String,
 
     // 🔥 Marketing tracking

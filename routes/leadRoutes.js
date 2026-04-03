@@ -10,6 +10,8 @@ const {
   assignLead,
   convertLead,
   setLeadToLost,
+  getActivities,
+  addActivity,
 } = require("../controllers/leadController.js");
 
 const { protect } = require("../middlewares/authMiddleware.js");
@@ -25,8 +27,10 @@ router.get("/:id", protect, getLeadById);
 router.put("/:id", protect, updateLead);
 router.delete("/:id", protect, authorize("admin"), deleteLead);
 
-router.post("/:id/assign", protect, assignLead);
+router.post("/:id/assign", protect, authorize("admin", "sales_manager"), assignLead);
 router.post("/:id/convert", protect, convertLead);
 router.post("/:id/mark-lost", protect, setLeadToLost);
+router.get("/:id/activities", protect, getActivities);
+router.post("/:id/activities", protect, addActivity);
 
 module.exports = router;
