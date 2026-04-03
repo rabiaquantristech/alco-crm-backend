@@ -10,6 +10,7 @@ const authRoute = require("./routes/authRoute.js");
 const userRoute = require("./routes/userRoute.js");
 const adminRoute = require("./routes/adminRoute.js");
 const leadRoutes = require("./routes/leadRoutes.js");
+const connectDB = require("./config/db.js");
 
 const app = express();
 
@@ -52,20 +53,33 @@ app.get("/", (req, res) => {
   });
 });
 
-mongoose
-  .connect(process.env.ATLAS_URL, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000
-  })
+// mongoose
+//   .connect(process.env.ATLAS_URL, {
+//   serverSelectionTimeoutMS: 30000,
+//   socketTimeoutMS: 45000
+//   })
+//   .then(() => {
+//   console.log("✅ Database Connected Successfully");
+//   if (process.env.NODE_ENV !== "production") {
+//     app.listen(process.env.PORT || 5000, () => {
+//       console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5000}`);
+//     });
+//   }
+// }).catch((err) => {
+//   console.error("❌ Database connection error:", err.message);
+// });
+connectDB()
   .then(() => {
-  console.log("✅ Database Connected Successfully");
-  if (process.env.NODE_ENV !== "production") {
-    app.listen(process.env.PORT || 5000, () => {
-      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5000}`);
-    });
-  }
-}).catch((err) => {
-  console.error("❌ Database connection error:", err.message);
-});
+    console.log("✅ Database Connected");
+
+    if (process.env.NODE_ENV !== "production") {
+      app.listen(process.env.PORT || 5000, () => {
+        console.log(
+          `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
+        );
+      });
+    }
+  })
+  .catch((err) => console.error("❌ DB Error:", err));
 
 module.exports = app;
