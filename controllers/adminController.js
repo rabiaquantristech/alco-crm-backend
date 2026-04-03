@@ -4,10 +4,22 @@ const User = require("../models/userModel.js");
 const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
 const generateColor = require("../utils/generateColor");
 
-// ✅ GET ALL USERS (ADMIN ONLY)
+// ✅ GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const requesterRole = req.user.role;
+
+    let query = {};
+
+    if (requesterRole === "admin") {
+      // ✅ Admin ko sirf non-admin users dikhao
+      query = {
+        role: { $nin: ["super_admin", "admin"] },
+      };
+    }
+    // super_admin ko sab dikhao — query empty rahegi
+
+    const users = await User.find(query).select("-password");
 
     res.status(200).json({
       success: true,
@@ -28,10 +40,15 @@ exports.getUserById = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    // ✅ Admin super_admin ya admin ko nahi dekh sakta
+    if (
+      req.user.role === "admin" &&
+      (user.role === "super_admin" || user.role === "admin")
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    res.status(200).json({ success: true, user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -129,11 +146,27 @@ exports.updateUser = async (req, res) => {
 // ✅ DELETE USER BY ID
 exports.deleteUserById = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const userToDelete = await User.findById(req.params.id);
 
-    if (!user) {
+    if (!userToDelete) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    const requesterRole = req.user.role;
+
+    // ✅ Admin, super_admin ya kisi bhi admin ko delete nahi kar sakta
+    if (requesterRole === "admin") {
+      if (
+        userToDelete.role === "super_admin" ||
+        userToDelete.role === "admin"
+      ) {
+        return res.status(403).json({
+          message: "You cannot delete an admin or super admin",
+        });
+      }
+    }
+
+    await User.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
@@ -144,14 +177,26 @@ exports.deleteUserById = async (req, res) => {
   }
 };
 
-// ⚠️ DELETE ALL USERS (SUPER ADMIN ONLY)
+// ✅ DELETE ALL USERS
 exports.deleteAllUsers = async (req, res) => {
   try {
-    await User.deleteMany();
+    const requesterRole = req.user.role;
+
+    if (requesterRole === "super_admin") {
+      // ✅ Super admin — sab delete kar sakta hai
+      await User.deleteMany({});
+    } else if (requesterRole === "admin") {
+      // ✅ Admin — sirf non-admin users delete kar sakta hai
+      await User.deleteMany({
+        role: { $nin: ["super_admin", "admin"] },
+      });
+    } else {
+      return res.status(403).json({ message: "Not authorized" });
+    }
 
     res.status(200).json({
       success: true,
-      message: "All users deleted successfully",
+      message: "Users deleted successfully",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
