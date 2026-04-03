@@ -53,64 +53,6 @@ exports.register = async (req, res) => {
 };
 
 // LOGIN
-// exports.login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-
-//     const user = await User.findOne({ email }).select("+password");
-
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
-
-//     // ✅ Check verification AFTER fetching user
-//     if (!user.isVerified) {
-//       return res.status(401).json({
-//         message: "Please verify your email first"
-//       });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, user.password);
-
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
-
-//     await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
-
-//     const token = jwt.sign(
-//       { id: user._id, role: user.role },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1h" }
-//     );
-
-//     await sendEmail({
-//       to: user.email,
-//       subject: "New Login Alert 🔐",
-//       templateName: "login",
-//       replacements: {
-//         UserName: user.name,
-//         SecurityLink: "http://localhost:3000/security",
-//         YourCompanyName: "Al-and-cp"
-//       }
-//     });
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Login successful",
-//       token,
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         role: user.role
-//       }
-//     });
-
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
