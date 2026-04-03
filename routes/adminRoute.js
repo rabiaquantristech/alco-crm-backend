@@ -13,6 +13,7 @@ const router = express.Router();
 router.get("/users", protect, authorize("admin"), getAllUsers);
 router.get("/users/:id", protect, authorize("admin"), getUserById);
 router.patch("/users/:id", protect, authorize("admin"), updateUser);
+router.patch("/users/:id/change-password", protect, authorize("admin"), changeUserPassword);
 router.delete("/users/:id", protect, authorize("admin"), deleteUserById);
 router.delete("/users", protect, authorize("admin"), deleteAllUsers);
 
