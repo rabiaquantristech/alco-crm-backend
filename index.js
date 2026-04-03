@@ -17,21 +17,21 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://alco-crm-frontend.vercel.app",
-      "https://alco-cms-website.vercel.app",
-    ],
-    credentials: true,
+  origin: [
+    "http://localhost:3000",
+    "https://alco-crm-frontend.vercel.app",
+    "https://alco-cms-website.vercel.app",
+  ],
+  credentials: true,
   })
 );
 
 // Session — passport se pehle hona chahiye
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: false,
+  secret: process.env.SESSION_SECRET || "secret",
+  resave: false,
+  saveUninitialized: false,
   })
 );
 
@@ -52,20 +52,19 @@ app.get("/", (req, res) => {
 
 mongoose
   .connect(process.env.ATLAS_URL, {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
     bufferCommands: false,
   })
   .then(() => {
-    console.log("✅ Database Connected Successfully");
+  console.log("✅ Database Connected Successfully");
+  if (process.env.NODE_ENV !== "production") {
     app.listen(process.env.PORT || 5000, () => {
-      console.log(
-        `🚀 Server running on http://localhost:${process.env.PORT || 5000}`
-      );
+      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5000}`);
     });
-  })
-  .catch((err) => {
-    console.error("❌ Database connection error:", err.message);
-  });
+  }
+}).catch((err) => {
+  console.error("❌ Database connection error:", err.message);
+});
 
 module.exports = app;
