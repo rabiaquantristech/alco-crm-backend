@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/sendEmail.js");
 const User = require("../models/userModel.js");
+const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
 
 // ✅ GET ALL USERS (ADMIN ONLY)
 exports.getAllUsers = async (req, res) => {
@@ -73,6 +74,9 @@ exports.updateUser = async (req, res) => {
         message: "User not found",
       });
     }
+
+    console.log("Existing User:", existingUser);
+    console.log("Update Fields:", updateFields);
  
     // ✅ Detect which fields actually changed
     const changedFields = [];
@@ -112,7 +116,7 @@ exports.updateUser = async (req, res) => {
         )
         .join("");
  
-      await sendEmail({
+      await sendEmailDynamic({
         to: existingUser.email,
         subject: "Account Details Updated ✏️",
         templateName: "user-update-admin",
@@ -259,7 +263,7 @@ exports.changeUserPassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
  
-    await sendEmail({
+    await sendEmailDynamic({
       to: user.email,
       subject: "Password Changed 🔐",
       templateName: "user-password-update-admin",
