@@ -163,13 +163,19 @@ exports.createUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
+    // ✅ Duplicate check
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ✅ Role validation — YAHAN ADD KARO
+    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "user"];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
     const avatarColor = generateColor(email);
 
     const user = await User.create({
@@ -177,7 +183,7 @@ exports.createUser = async (req, res) => {
       email,
       password: hashedPassword,
       role: role || "user",
-      isVerified: true, // admin se banaya toh directly verified
+      isVerified: true,
       avatarColor
     });
 
@@ -201,7 +207,14 @@ exports.assignRole = async (req, res) => {
   try {
     const { role } = req.body;
 
-    const allowedRoles = ["user", "admin", "sales_manager", "instructor", "student"];
+    const allowedRoles = [
+      "super_admin",
+      "admin",
+      "sales_manager",
+      "sales_rep",
+      "support",
+      "user"
+    ];
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
