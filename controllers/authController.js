@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
       replacements: {
         UserName: user.name,
         VerifyLink: verificationUrl,
-        YourCompanyName: "Al-and-cp"
+        YourCompanyName: "Al-and-co"
       }
     });
 
@@ -146,7 +146,7 @@ exports.login = async (req, res) => {
       replacements: {
         UserName: user.name,
         SecurityLink: "http://localhost:3000/security",
-        YourCompanyName: "Al-and-cp"
+        YourCompanyName: "Al-and-co"
       }
     });
 
@@ -211,7 +211,7 @@ exports.forgotPassword = async (req, res) => {
     replacements: {
       UserName: user.name,
       OTP: otp,
-      YourCompanyName: "Al-and-cp"
+      YourCompanyName: "Al-and-co"
     }
   });
 
@@ -290,7 +290,7 @@ exports.verifyEmail = async (req, res) => {
     replacements: {
       UserName: user.name,
       LoginLink: "http://localhost:3000/login",
-      YourCompanyName: "Al-and-cp"
+      YourCompanyName: "Al-and-co"
     }
   });
 
