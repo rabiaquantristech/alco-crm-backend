@@ -417,7 +417,7 @@ exports.resendVerification = async (req, res) => {
       replacements: {
         UserName: user.name,
         VerifyLink: verificationUrl,
-        YourCompanyName: "Al-and-cp",
+        YourCompanyName: "Al-and-co",
       },
     });
 
