@@ -15,39 +15,16 @@ const app = express();
 // Middlewares
 app.use(express.json());
 
-// app.use(
-//   cors({
-//   origin: [
-//     "http://localhost:3000",
-//     "https://alco-crm-frontend.vercel.app",
-//     "https://alco-cms-website.vercel.app",
-//   ],
-//   credentials: true,
-//   })
-// );
 app.use(
   cors({
-    origin: function (origin, callback) {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        "https://alco-crm-frontend.vercel.app",
-        "https://alco-cms-website.vercel.app",
-      ];
-      // ✅ Postman/server-to-server ke liye origin undefined allow karo
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  origin: [
+    "http://localhost:3000",
+    "https://alco-crm-frontend.vercel.app",
+    "https://alco-cms-website.vercel.app",
+  ],
+  credentials: true,
   })
 );
-
-// ✅ Vercel pe OPTIONS preflight handle karo
-app.options("*", cors());
 
 // Session — passport se pehle hona chahiye
 app.use(
