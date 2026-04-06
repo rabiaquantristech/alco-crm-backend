@@ -17,20 +17,34 @@ const {
 const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
 
-// Public (lead capture)
+// ✅ Public 
 router.post("/", createLead);
 
-// Admin / CRM
-router.get("/", protect, authorize("admin", "super_admin", "sales_manager"), getLeads);
-router.get("/:id", protect, authorize("admin", "super_admin", "sales_manager"), getLeadById);
+// ✅ Get Leads 
+router.get("/", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), getLeads);
 
-router.put("/:id", protect, updateLead);
-router.delete("/:id", protect, authorize("admin", "super_admin"), deleteLead);
+// ✅ Get Single Lead 
+router.get("/:id", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), getLeadById);
 
-router.post("/:id/assign", protect, authorize("admin", "super_admin", "sales_manager"), assignLead);
-router.post("/:id/convert", protect, convertLead);
-router.post("/:id/mark-lost", protect, setLeadToLost);
-router.get("/:id/activities", protect, getActivities);
-router.post("/:id/activities", protect, addActivity);
+// ✅ Update Lead 
+router.put("/:id", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), updateLead);
+
+// ✅ Delete Lead 
+router.delete("/:id", protect, authorize("super_admin", "admin"), deleteLead);
+
+// ✅ Assign Lead 
+router.post("/:id/assign", protect, authorize("super_admin", "admin", "sales_manager"), assignLead);
+
+// ✅ Convert Lead 
+router.post("/:id/convert", protect, authorize("super_admin", "admin", "sales_manager"), convertLead);
+
+// ✅ Mark Lost 
+router.post("/:id/mark-lost", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), setLeadToLost);
+
+// ✅ Get Activities 
+router.get("/:id/activities", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), getActivities);
+
+// ✅ Add Activity 
+router.post("/:id/activities", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), addActivity);
 
 module.exports = router;
