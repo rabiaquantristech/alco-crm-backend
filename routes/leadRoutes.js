@@ -21,13 +21,13 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 router.post("/", createLead);
 
 // Admin / CRM
-router.get("/", protect, getLeads);
-router.get("/:id", protect, getLeadById);
+router.get("/", protect, authorize("admin", "super_admin", "sales_manager"), getLeads);
+router.get("/:id", protect, authorize("admin", "super_admin", "sales_manager"), getLeadById);
 
 router.put("/:id", protect, updateLead);
-router.delete("/:id", protect, authorize("admin"), deleteLead);
+router.delete("/:id", protect, authorize("admin", "super_admin"), deleteLead);
 
-router.post("/:id/assign", protect, authorize("admin", "sales_manager"), assignLead);
+router.post("/:id/assign", protect, authorize("admin", "super_admin", "sales_manager"), assignLead);
 router.post("/:id/convert", protect, convertLead);
 router.post("/:id/mark-lost", protect, setLeadToLost);
 router.get("/:id/activities", protect, getActivities);
