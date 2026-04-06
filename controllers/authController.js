@@ -62,7 +62,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
 
-    await connectDB();
+    // await connectDB();
 
     const { email, password } = req.body;
 
