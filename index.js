@@ -40,6 +40,11 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 // Routes
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);

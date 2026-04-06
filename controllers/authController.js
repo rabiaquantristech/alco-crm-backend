@@ -1,5 +1,4 @@
 const User = require("../models/userModel.js");
-const connectDB = require("../config/db.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -61,8 +60,6 @@ exports.register = async (req, res) => {
 // LOGIN
 exports.login = async (req, res) => {
   try {
-
-    await connectDB();
 
     const { email, password } = req.body;
 
