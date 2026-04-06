@@ -11,7 +11,9 @@ async function connectDB() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(process.env.ATLAS_URL, {
-      serverSelectionTimeoutMS: 30000,
+      // serverSelectionTimeoutMS: 30000,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
   }
 
