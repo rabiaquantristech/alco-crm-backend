@@ -12,6 +12,7 @@ const {
   setLeadToLost,
   getActivities,
   addActivity,
+  getLeadsStats
 } = require("../controllers/leadController.js");
 
 const { protect } = require("../middlewares/authMiddleware.js");
@@ -19,6 +20,9 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 
 // ✅ Public 
 router.post("/", createLead);
+
+// ✅ Stats rout
+router.get("/stats", protect, authorize("super_admin", "admin", "sales_manager"), getLeadsStats);
 
 // ✅ Get Leads 
 router.get("/", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), getLeads);
