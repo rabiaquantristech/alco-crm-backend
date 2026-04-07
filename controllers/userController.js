@@ -1,6 +1,39 @@
 const User = require("../models/userModel.js");
 const bcrypt = require("bcryptjs");
 
+// ✅ GET ALL USERS 
+exports.getAllUsers = async (req, res) => {
+  try {
+    const requesterRole = req.user.role;
+
+    let query = {};
+
+    if (requesterRole === "admin") {
+      // Admin: see all except admins
+      query = {
+        role: { $nin: ["super_admin", "admin"] },
+      };
+    } 
+    else if (requesterRole === "sales_manager") {
+      // Sales manager: see only reps + normal users
+      query = {
+        role: { $in: ["sales_rep", "user"] },
+      };
+    } 
+    // super_admin → no query filter (see all)
+
+    const users = await User.find(query).select("-password");
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // ✅ GET OWN PROFILE
 exports.getProfile = async (req, res) => {
   try {
