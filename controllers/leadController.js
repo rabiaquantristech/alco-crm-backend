@@ -30,7 +30,7 @@ exports.getLeads = async (req, res) => {
             source,
             search,
             assigned_to,
-            quality,        
+            quality,
         } = req.query;
 
         const query = {};
@@ -38,7 +38,7 @@ exports.getLeads = async (req, res) => {
         if (status) query.status = status;
         if (source) query.source = source;
         if (assigned_to) query.assigned_to = assigned_to;
-        if (quality) query.quality = quality;  
+        if (quality) query.quality = quality;
 
         if (search) {
             query.$or = [
@@ -163,23 +163,23 @@ exports.convertLead = async (req, res) => {
 
 // LOST LEAD STATUS
 exports.setLeadToLost = async (req, res) => {
-  try {
-    const { lost_reason, lost_notes } = req.body;
+    try {
+        const { lost_reason, lost_notes } = req.body;
 
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      { 
-        status: "lost",
-        lost_reason,    // ✅ save karo
-        lost_notes,
-      },
-      { new: true }
-    );
+        const lead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            {
+                status: "lost",
+                lost_reason,    // ✅ save karo
+                lost_notes,
+            },
+            { new: true }
+        );
 
-    res.status(200).json({ success: true, data: lead });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+        res.status(200).json({ success: true, data: lead });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // GET ACTIVITIES
@@ -217,41 +217,92 @@ exports.addActivity = async (req, res) => {
 };
 
 // GET LEADS STATS
+// exports.getLeadsStats = async (req, res) => {
+//   try {
+//     const stats = await Lead.aggregate([
+//       {
+//         $group: {
+//           _id: null,
+//           total: { $sum: 1 },
+//           new: { $sum: { $cond: [{ $eq: ["$status", "new"] }, 1, 0] } },
+//           contacted: { $sum: { $cond: [{ $eq: ["$status", "contacted"] }, 1, 0] } },
+//           qualified: { $sum: { $cond: [{ $eq: ["$status", "qualified"] }, 1, 0] } },
+//           converted: { $sum: { $cond: [{ $eq: ["$status", "converted"] }, 1, 0] } },
+//           lost: { $sum: { $cond: [{ $eq: ["$status", "lost"] }, 1, 0] } },
+//           hot: { $sum: { $cond: [{ $eq: ["$quality", "hot"] }, 1, 0] } },
+//           warm: { $sum: { $cond: [{ $eq: ["$quality", "warm"] }, 1, 0] } },
+//           cold: { $sum: { $cond: [{ $eq: ["$quality", "cold"] }, 1, 0] } },
+//           assigned: { $sum: { $cond: [{ $ne: ["$assigned_to", null] }, 1, 0] } },
+//         }
+//       }
+//     ]);
+
+//     const data = stats[0] || {
+//       total: 0, new: 0, contacted: 0, qualified: 0,
+//       converted: 0, lost: 0, hot: 0, warm: 0, cold: 0, assigned: 0
+//     };
+
+//     const conversionRate = data.total > 0
+//       ? ((data.converted / data.total) * 100).toFixed(1)
+//       : "0";
+
+//     res.status(200).json({
+//       success: true,
+//       data: { ...data, conversionRate }
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+const mongoose = require("mongoose"); // ✅ ADD THIS
+
 exports.getLeadsStats = async (req, res) => {
-  try {
-    const stats = await Lead.aggregate([
-      {
-        $group: {
-          _id: null,
-          total: { $sum: 1 },
-          new: { $sum: { $cond: [{ $eq: ["$status", "new"] }, 1, 0] } },
-          contacted: { $sum: { $cond: [{ $eq: ["$status", "contacted"] }, 1, 0] } },
-          qualified: { $sum: { $cond: [{ $eq: ["$status", "qualified"] }, 1, 0] } },
-          converted: { $sum: { $cond: [{ $eq: ["$status", "converted"] }, 1, 0] } },
-          lost: { $sum: { $cond: [{ $eq: ["$status", "lost"] }, 1, 0] } },
-          hot: { $sum: { $cond: [{ $eq: ["$quality", "hot"] }, 1, 0] } },
-          warm: { $sum: { $cond: [{ $eq: ["$quality", "warm"] }, 1, 0] } },
-          cold: { $sum: { $cond: [{ $eq: ["$quality", "cold"] }, 1, 0] } },
-          assigned: { $sum: { $cond: [{ $ne: ["$assigned_to", null] }, 1, 0] } },
-        }
-      }
-    ]);
+    try {
+        const { userId } = req.query;
 
-    const data = stats[0] || {
-      total: 0, new: 0, contacted: 0, qualified: 0,
-      converted: 0, lost: 0, hot: 0, warm: 0, cold: 0, assigned: 0
-    };
+        const matchStage = userId
+            ? { assigned_to: new mongoose.Types.ObjectId(userId) }
+            : {};
 
-    const conversionRate = data.total > 0
-      ? ((data.converted / data.total) * 100).toFixed(1)
-      : "0";
+        const stats = await Lead.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    new: { $sum: { $cond: [{ $eq: ["$status", "new"] }, 1, 0] } },
+                    contacted: { $sum: { $cond: [{ $eq: ["$status", "contacted"] }, 1, 0] } },
+                    qualified: { $sum: { $cond: [{ $eq: ["$status", "qualified"] }, 1, 0] } },
+                    converted: { $sum: { $cond: [{ $eq: ["$status", "converted"] }, 1, 0] } },
+                    lost: { $sum: { $cond: [{ $eq: ["$status", "lost"] }, 1, 0] } },
 
-    res.status(200).json({
-      success: true,
-      data: { ...data, conversionRate }
-    });
+                    hot: { $sum: { $cond: [{ $eq: ["$quality", "hot"] }, 1, 0] } },
+                    warm: { $sum: { $cond: [{ $eq: ["$quality", "warm"] }, 1, 0] } },
+                    cold: { $sum: { $cond: [{ $eq: ["$quality", "cold"] }, 1, 0] } },
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+                    assigned: { $sum: { $cond: [{ $ne: ["$assigned_to", null] }, 1, 0] } },
+                }
+            }
+        ]);
+
+        const data = stats[0] || {
+            total: 0, new: 0, contacted: 0, qualified: 0,
+            converted: 0, lost: 0, hot: 0, warm: 0, cold: 0, assigned: 0
+        };
+
+        const conversionRate =
+            data.total > 0
+                ? ((data.converted / data.total) * 100).toFixed(1)
+                : "0";
+
+        res.status(200).json({
+            success: true,
+            data: { ...data, conversionRate }
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
