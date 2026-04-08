@@ -72,7 +72,6 @@ exports.createLead = async (req, res) => {
         // if (existingLead) {
         //     return res.status(400).json({ message: "Lead with this email already exists" });
         // }
-
         // 2️⃣ Check if User already exists
         const existingUser = await User.findOne({ email });
 
@@ -86,6 +85,8 @@ exports.createLead = async (req, res) => {
 
             const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+            const avatarColor = generateColor(email);
+
             user = await User.create({
                 name: first_name + " " + last_name,
                 email,
@@ -94,6 +95,7 @@ exports.createLead = async (req, res) => {
                 isVerified: true,   // since created via lead
                 isActive: true,
                 isPlayable: false,
+                avatarColor,
                 isTemporaryPassword: true
             });
         }

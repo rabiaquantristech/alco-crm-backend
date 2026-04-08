@@ -13,13 +13,13 @@ exports.getAllUsers = async (req, res) => {
       query = {
         role: { $nin: ["super_admin", "admin"] },
       };
-    } 
+    }
     else if (requesterRole === "sales_manager") {
       // Sales manager: see only reps + normal users
       query = {
         role: { $in: ["sales_rep", "user"] },
       };
-    } 
+    }
     // super_admin → no query filter (see all)
 
     const users = await User.find(query).select("-password");
@@ -79,6 +79,11 @@ exports.changePassword = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({ message: "Old password incorrect" });
+    }
+
+    if (user.isTemporaryPassword) {
+      user.isTemporaryPassword = false;
+      await user.save();
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
