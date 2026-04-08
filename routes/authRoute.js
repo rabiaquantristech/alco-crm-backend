@@ -134,7 +134,7 @@ router.get("/linkedin/callback", async (req, res) => {
         name,
         email,
         isVerified: true,
-        password: "oauth_linkedin",
+        password: "oauth_linkedin"
       });
     }
 

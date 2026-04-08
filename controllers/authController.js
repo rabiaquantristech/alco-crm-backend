@@ -93,7 +93,7 @@ exports.login = async (req, res) => {
       templateName: "login",
       replacements: {
         UserName: user.name,
-        SecurityLink: "http://localhost:3000/security",
+        SecurityLink: "https://alco-crm-frontend.vercel.app/login",
         YourCompanyName: "Al-and-co"
       }
     });

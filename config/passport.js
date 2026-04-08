@@ -33,7 +33,7 @@ passport.use(
             name: profile.displayName,
             email: profile.emails[0].value,
             isVerified: true,
-            password: "oauth_google",
+            password: "oauth_google"
           });
         }
 

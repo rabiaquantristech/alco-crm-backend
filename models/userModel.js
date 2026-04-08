@@ -46,6 +46,11 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    isPaid: {
+      type: Boolean,
+      default: false
+    },
+
     permissions: {
       type: [String],
       default: []

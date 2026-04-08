@@ -5,6 +5,7 @@ const templates = {
     "user-update-admin": require("../template/user-update-admin.js"),
     "user-password-update-admin": require("../template/user-password-update-admin.js"),
     "user-role-update-admin": require("../template/user-role-update-admin.js"),
+    "send-user-credentials": require("../template/send-user-credentials.js"),
 };
 
 const sendEmailDynamic = async (options) => {

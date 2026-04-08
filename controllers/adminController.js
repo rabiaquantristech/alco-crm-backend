@@ -229,7 +229,8 @@ exports.createUser = async (req, res) => {
       password: hashedPassword,
       role: role || "user",
       isVerified: true,
-      avatarColor
+      avatarColor,
+      isPlayable: false
     });
 
     res.status(201).json({

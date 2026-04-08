@@ -1,20 +1,137 @@
+const mongoose = require("mongoose"); // ✅ ADD THIS
 const Lead = require("../models/leadModel.js");
+const bcrypt = require("bcryptjs");
+const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
+// const emailTemplate = require("../template/send-user-credentials.js");
+const User = require("../models/userModel.js");
+// const sendEmail = require("../utils/sendEmail.js");
 
 // CREATE LEAD (public or admin)
+// exports.createLead = async (req, res) => {
+//     try {
+//         // ✅ Duplicate email check
+//         const existing = await Lead.findOne({ email: req.body.email });
+//         if (existing) {
+//             return res.status(400).json({ message: "Lead with this email already exists" });
+//         }
+
+//         const lead = await Lead.create({
+//             ...req.body,
+//             created_by: req.user?.id || null,
+//         });
+
+//         res.status(201).json({ success: true, data: lead });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
+// exports.createLead = async (req, res) => {
+//     try {
+//         const existing = await Lead.findOne({ email: req.body.email });
+//         if (existing) {
+//             return res.status(400).json({ message: "Lead with this email already exists" });
+//         }
+
+//         // 👉 generate password (simple example)
+//         const password = Math.random().toString(36).slice(-8);
+
+//         const lead = await Lead.create({
+//             ...req.body,
+//             password, // agar store karna ho (hash karna better hai)
+//             created_by: req.user?.id || null,
+//         });
+
+//         await sendEmailDynamic({
+//             to: lead.email,
+//             subject: "Your Account Credentials 🔑",
+//             templateName: "send-user-credentials",
+//             replacements: {
+//                 UserName: lead.first_name + " " + lead.last_name,
+//                 UserEmail: lead.email,
+//                 UserPassword: password,
+//                 SupportEmail: "alco@support.com",
+//                 YourCompanyName: "Al-and-co",
+//                 LoginLink: "https://alco-crm-frontend.vercel.app/login?email=" + lead.email + "&password=" + password, 
+//             },
+//         });
+
+//         res.status(201).json({ success: true, data: lead });
+
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 exports.createLead = async (req, res) => {
     try {
-        // ✅ Duplicate email check
-        const existing = await Lead.findOne({ email: req.body.email });
-        if (existing) {
-            return res.status(400).json({ message: "Lead with this email already exists" });
+        const { email, first_name, last_name } = req.body;
+
+        // 1️⃣ Check Lead duplicate
+        // const existingLead = await Lead.findOne({ email });
+        // if (existingLead) {
+        //     return res.status(400).json({ message: "Lead with this email already exists" });
+        // }
+
+        // 2️⃣ Check if User already exists
+        const existingUser = await User.findOne({ email });
+
+        let user = existingUser;
+
+        let plainPassword = null;
+
+        // 3️⃣ If user does NOT exist → create user
+        if (!existingUser) {
+            plainPassword = Math.random().toString(36).slice(-8);
+
+            const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+            user = await User.create({
+                name: first_name + " " + last_name,
+                email,
+                password: hashedPassword,
+                role: "user",
+                isVerified: true,   // since created via lead
+                isActive: true,
+                isPlayable: false
+            });
         }
 
+        // 4️⃣ Create Lead
         const lead = await Lead.create({
             ...req.body,
             created_by: req.user?.id || null,
         });
 
-        res.status(201).json({ success: true, data: lead });
+        // 5️⃣ Send Email (only if new user created)
+        if (!existingUser) {
+            await sendEmailDynamic({
+                to: email,
+                subject: "Your Account Credentials 🔑",
+                templateName: "send-user-credentials",
+                replacements: {
+                    UserName: first_name + " " + last_name,
+                    UserEmail: email,
+                    UserPassword: plainPassword,
+                    SupportEmail: "alco@support.com",
+                    YourCompanyName: "Al-and-co",
+                    LoginLink:
+                        "https://alco-crm-frontend.vercel.app/login?email=" +
+                        email +
+                        "&password=" +
+                        plainPassword,
+                },
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: existingUser
+                ? "Lead created (user already exists)"
+                : "Lead + User created successfully",
+            data: lead,
+        });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -146,16 +263,33 @@ exports.assignLead = async (req, res) => {
 // CONVERT LEAD STATUS
 exports.convertLead = async (req, res) => {
     try {
+        const { program_id, batch_id, payment_plan_id } = req.body;
+
+        if (!program_id) {
+            return res.status(400).json({ message: "program_id is required" });
+        }
+
         const lead = await Lead.findByIdAndUpdate(
             req.params.id,
-            { status: "converted" },
+            {
+                status: "converted",
+                program_id,
+                batch_id,
+                payment_plan_id,
+                converted_at: new Date(),
+            },
             { new: true }
         );
+
+        if (!lead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
 
         res.status(200).json({
             success: true,
             data: lead,
         });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -256,7 +390,6 @@ exports.addActivity = async (req, res) => {
 //   }
 // };
 
-const mongoose = require("mongoose"); // ✅ ADD THIS
 
 exports.getLeadsStats = async (req, res) => {
     try {
