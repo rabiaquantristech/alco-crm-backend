@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema(
       default: false
     },
 
+    isTemporaryPassword: {
+      type: Boolean,
+      default: false
+    },
+
     permissions: {
       type: [String],
       default: []

@@ -93,7 +93,8 @@ exports.createLead = async (req, res) => {
                 role: "user",
                 isVerified: true,   // since created via lead
                 isActive: true,
-                isPlayable: false
+                isPlayable: false,
+                isTemporaryPassword: true
             });
         }
 

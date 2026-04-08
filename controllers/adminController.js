@@ -230,7 +230,8 @@ exports.createUser = async (req, res) => {
       role: role || "user",
       isVerified: true,
       avatarColor,
-      isPlayable: false
+      isPlayable: false,
+      isTemporaryPassword: true
     });
 
     res.status(201).json({
