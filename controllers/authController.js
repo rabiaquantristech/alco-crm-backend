@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { generateToken, generateRefreshToken } = require("../utils/generateToken.js");
 const sendEmail = require("../utils/sendEmail.js");
-const generateColor = require("../utils/generateColor");
+const generateColor = require("../utils/generateColor.js");
 
 // REGISTER 
 exports.register = async (req, res) => {
