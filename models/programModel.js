@@ -9,7 +9,6 @@ const programSchema = new mongoose.Schema(
         },
         slug: {
             type: String,
-            required: true,
             unique: true,
             lowercase: true,
         },
@@ -69,8 +68,8 @@ const programSchema = new mongoose.Schema(
 );
 
 // Auto slug generate from name
-programSchema.pre("save", function (next) {
-    if (this.isModified("name") && !this.slug) {
+programSchema.pre("validate", function (next) {
+    if (!this.slug && this.name) {
         this.slug = this.name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
