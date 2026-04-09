@@ -37,11 +37,11 @@ const programSchema = new mongoose.Schema(
         duration_weeks: {
             type: Number,
         },
-        level: {
-            type: String,
-            enum: ["beginner", "intermediate", "advanced"],
-            default: "beginner",
-        },
+        // level: {
+        //     type: String,
+        //     enum: ["beginner", "intermediate", "advanced"],
+        //     default: "beginner",
+        // },
         category: {
             type: String,
             enum: ["nlp", "icf", "hypnotherapy", "trainer"],
