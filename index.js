@@ -10,6 +10,7 @@ const authRoute = require("./routes/authRoute.js");
 const userRoute = require("./routes/userRoute.js");
 const adminRoute = require("./routes/adminRoute.js");
 const leadRoutes = require("./routes/leadRoutes.js");
+const programRoutes = require("./routes/programRoutes.js");
 const connectDB = require("./config/db.js");
 
 const app = express();
@@ -50,6 +51,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/admin", adminRoute);
 app.use("/api/v1/leads", leadRoutes);
+app.use("/api/v1/programs", programRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).json({
