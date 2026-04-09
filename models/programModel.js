@@ -5,7 +5,7 @@ const programSchema = new mongoose.Schema(
         name: {
             type: String,
             required: true,
-            trim: true,
+            // trim: true,
         },
         slug: {
             type: String,
@@ -68,14 +68,14 @@ const programSchema = new mongoose.Schema(
 );
 
 // Auto slug generate from name
-programSchema.pre("validate", function (next) {
-    if (!this.slug && this.name) {
-        this.slug = this.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "");
-    }
-    next();
-});
+// programSchema.pre("validate", function (next) {
+//     if (!this.slug && this.name) {
+//         this.slug = this.name
+//             .toLowerCase()
+//             .replace(/[^a-z0-9]+/g, "-")
+//             .replace(/(^-|-$)/g, "");
+//     }
+//     next();
+// });
 
 module.exports = mongoose.model("Program", programSchema);
