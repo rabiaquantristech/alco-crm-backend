@@ -21,11 +21,13 @@ const {
   adminUpdateCourse,
   adminDeleteCourse,
   adminReorderCourses,
+  adminGetCourseById,
   // Admin — Modules
   adminGetModules,
   adminCreateModule,
   adminUpdateModule,
   adminDeleteModule,
+  adminGetModuleById,
   // Admin — Lessons
   adminGetLessons,
   adminCreateLesson,
@@ -36,7 +38,6 @@ const {
   adminCreateBatch,
   adminUpdateBatch,
   adminDeleteBatch,
-  adminGetCourseById,
 } = require("../controllers/programController.js");
 
 
