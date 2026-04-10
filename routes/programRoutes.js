@@ -46,13 +46,16 @@ router.get("/public/:slug", getProgramBySlug);
 router.get("/public/:slug/curriculum", getProgramCurriculum);
 router.get("/public/:slug/batches", getProgramBatches);
 
-// ── ADMIN — Programs ──
+// ── FIRST ADMIN — Programs ──
 router.get("/", protect, authorize("admin", "super_admin"), adminGetPrograms);
 router.post("/", protect, authorize("admin", "super_admin"), adminCreateProgram);
-router.get("/:id", protect, authorize("admin", "super_admin"), adminGetProgramById);
-router.put("/:id", protect, authorize("admin", "super_admin"), adminUpdateProgram);
-router.delete("/:id", protect, authorize("admin", "super_admin"), adminDeleteProgram);
 router.post("/:id/duplicate", protect, authorize("admin", "super_admin"), adminDuplicateProgram);
+
+// ── ADMIN — Batches ──
+router.get("/batches", protect, authorize("admin", "super_admin"), adminGetBatches);
+router.post("/batches", protect, authorize("admin", "super_admin"), adminCreateBatch);
+router.put("/batches/:id", protect, authorize("admin", "super_admin"), adminUpdateBatch);
+router.delete("/batches/:id", protect, authorize("admin", "super_admin"), adminDeleteBatch);
 
 // ── ADMIN — Courses ──
 router.get("/:id/courses", protect, authorize("admin", "super_admin"), adminGetCourses);
@@ -73,10 +76,9 @@ router.post("/modules/:id/lessons", protect, authorize("admin", "super_admin"), 
 router.put("/lessons/:id", protect, authorize("admin", "super_admin"), adminUpdateLesson);
 router.delete("/lessons/:id", protect, authorize("admin", "super_admin"), adminDeleteLesson);
 
-// ── ADMIN — Batches ──
-router.get("/batches", protect, authorize("admin", "super_admin"), adminGetBatches);
-router.post("/batches", protect, authorize("admin", "super_admin"), adminCreateBatch);
-router.put("/batches/:id", protect, authorize("admin", "super_admin"), adminUpdateBatch);
-router.delete("/batches/:id", protect, authorize("admin", "super_admin"), adminDeleteBatch);
+// ── LAST ADMIN — Programs ──
+router.get("/:id", protect, authorize("admin", "super_admin"), adminGetProgramById);
+router.put("/:id", protect, authorize("admin", "super_admin"), adminUpdateProgram);
+router.delete("/:id", protect, authorize("admin", "super_admin"), adminDeleteProgram);
 
 module.exports = router;

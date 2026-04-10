@@ -1,3 +1,5 @@
+
+const mongoose = require("mongoose");
 const Program = require("../models/programModel.js");
 const Course = require("../models/courseModel.js");
 const Module = require("../models/moduleModel.js");
@@ -176,36 +178,36 @@ exports.adminGetPrograms = async (req, res) => {
 //     }
 // };
 exports.adminCreateProgram = async (req, res) => {
-  try {
-    const { name, slug } = req.body;
+    try {
+        const { name, slug } = req.body;
 
-    // ✅ Slug — manual diya toh woh use karo, nahi toh name se generate karo
-    const finalSlug = slug
-      ? slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-      : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        // ✅ Slug — manual diya toh woh use karo, nahi toh name se generate karo
+        const finalSlug = slug
+            ? slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+            : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    // ✅ Duplicate slug check
-    const existing = await Program.findOne({ slug: finalSlug });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "Program with this slug already exists",
-      });
+        // ✅ Duplicate slug check
+        const existing = await Program.findOne({ slug: finalSlug });
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: "Program with this slug already exists",
+            });
+        }
+
+        const program = await Program.create({
+            ...req.body,
+            slug: finalSlug,
+            created_by: req.user.id,
+        });
+
+        res.status(201).json({
+            success: true,
+            data: program,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    const program = await Program.create({
-      ...req.body,
-      slug: finalSlug,
-      created_by: req.user.id,
-    });
-
-    res.status(201).json({
-      success: true,
-      data: program,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 // GET /admin/v1/programs/:id
@@ -613,13 +615,41 @@ exports.adminDeleteLesson = async (req, res) => {
 // ═══════════════════════════════════════
 
 // GET /admin/v1/batches
+// exports.adminGetBatches = async (req, res) => {
+//     try {
+//         const { program_id, status } = req.query;
+
+//         const query = {};
+//         if (program_id) query.program_id = program_id;
+//         if (status) query.status = status;
+
+//         const batches = await Batch.find(query)
+//             .populate("program_id", "name slug")
+//             .populate("instructor_id", "name email")
+//             .sort({ start_date: 1 });
+
+//         res.status(200).json({
+//             success: true,
+//             data: batches,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 exports.adminGetBatches = async (req, res) => {
     try {
         const { program_id, status } = req.query;
 
         const query = {};
-        if (program_id) query.program_id = program_id;
-        if (status) query.status = status;
+
+        if (program_id) {
+            query.program_id = new mongoose.Types.ObjectId(program_id);
+        }
+
+        if (status) {
+            query.status = status;
+        }
 
         const batches = await Batch.find(query)
             .populate("program_id", "name slug")
