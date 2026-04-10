@@ -157,23 +157,55 @@ exports.adminGetPrograms = async (req, res) => {
 };
 
 // POST /admin/v1/programs
-exports.adminCreateProgram = async (req, res) => {
-    try {
-        const program = await Program.create({
-            ...req.body,
-            created_by: req.user.id,
-        });
+// exports.adminCreateProgram = async (req, res) => {
+//     try {
+//         const program = await Program.create({
+//             ...req.body,
+//             created_by: req.user.id,
+//         });
 
-        res.status(201).json({
-            success: true,
-            data: program,
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+//         res.status(201).json({
+//             success: true,
+//             data: program,
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             success: false,
+//             message: error.message,
+//         });
+//     }
+// };
+exports.adminCreateProgram = async (req, res) => {
+  try {
+    const { name, slug } = req.body;
+
+    // ✅ Slug — manual diya toh woh use karo, nahi toh name se generate karo
+    const finalSlug = slug
+      ? slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+      : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    // ✅ Duplicate slug check
+    const existing = await Program.findOne({ slug: finalSlug });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Program with this slug already exists",
+      });
     }
+
+    const program = await Program.create({
+      ...req.body,
+      slug: finalSlug,
+      created_by: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: program,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 // GET /admin/v1/programs/:id

@@ -67,15 +67,4 @@ const programSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Auto slug generate from name
-// programSchema.pre("validate", function (next) {
-//     if (!this.slug && this.name) {
-//         this.slug = this.name
-//             .toLowerCase()
-//             .replace(/[^a-z0-9]+/g, "-")
-//             .replace(/(^-|-$)/g, "");
-//     }
-//     next();
-// });
-
 module.exports = mongoose.model("Program", programSchema);
