@@ -21,6 +21,7 @@ const programSchema = new mongoose.Schema(
         level: {
             type: String,
             enum: ["level 1", "level 2", "level 3", "level 4", "level 5", "level 6"],
+            default: "level 1",
             required: true,
         },
         thumbnail: {
@@ -40,6 +41,7 @@ const programSchema = new mongoose.Schema(
         category: {
             type: String,
             enum: ["nlp", "icf", "hypnotherapy", "trainer"],
+            default: "nlp", 
         },
         status: {
             type: String,
