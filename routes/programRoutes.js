@@ -64,14 +64,14 @@ router.post("/:id/courses", protect, authorize("admin", "super_admin"), adminCre
 router.put("/courses/reorder", protect, authorize("admin", "super_admin"), adminReorderCourses);
 router.put("/courses/:id", protect, authorize("admin", "super_admin"), adminUpdateCourse);
 router.delete("/courses/:id", protect, authorize("admin", "super_admin"), adminDeleteCourse);
-router.get("/courses/:id", protect, authorize(...adminRoles), adminGetCourseById);
+router.get("/courses/:id", protect, authorize("admin", "super_admin"), adminGetCourseById);
 
 // ── ADMIN — Modules ──
 router.get("/courses/:id/modules", protect, authorize("admin", "super_admin"), adminGetModules);
 router.post("/courses/:id/modules", protect, authorize("admin", "super_admin"), adminCreateModule);
 router.put("/modules/:id", protect, authorize("admin", "super_admin"), adminUpdateModule);
 router.delete("/modules/:id", protect, authorize("admin", "super_admin"), adminDeleteModule);
-router.get("/modules/:id", protect, authorize(...adminRoles), adminGetModuleById);
+router.get("/modules/:id", protect, authorize("admin", "super_admin"), adminGetModuleById);
 
 // ── ADMIN — Lessons ──
 router.get("/modules/:id/lessons", protect, authorize("admin", "super_admin"), adminGetLessons);
