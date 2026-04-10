@@ -710,3 +710,25 @@ exports.adminDeleteBatch = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// GET /admin/v1/courses/:id
+exports.adminGetCourseById = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    res.status(200).json({ success: true, data: course });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// GET /admin/v1/modules/:id
+exports.adminGetModuleById = async (req, res) => {
+  try {
+    const module = await Module.findById(req.params.id);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+    res.status(200).json({ success: true, data: module });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
