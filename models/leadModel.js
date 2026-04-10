@@ -16,6 +16,27 @@ const leadSchema = new mongoose.Schema(
 
     phone: String,
 
+    // ✅ NEW FIELDS
+    nationality: {
+      type: String,
+    },
+
+    profession: {
+      type: String,
+    },
+
+    program_name: {
+      type: String,
+    },
+
+    program_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Program",
+    },
+    goals: [String],
+    message: String,
+    query: String,
+
     status: {
       type: String,
       enum: ["new", "contacted", "qualified", "converted", "lost"],
