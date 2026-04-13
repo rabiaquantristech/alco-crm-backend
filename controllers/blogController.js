@@ -25,24 +25,64 @@ exports.getBlogs = async (req, res) => {
   }
 };
 
+// exports.getBlogBySlug = async (req, res) => {
+//   try {
+//     const blog = await Blog.findOneAndUpdate(
+//       { slug: req.params.slug, status: "published" },
+//       { $inc: { views: 1 } },
+//       { new: true }
+//     ).populate("author", "name");
+
+//     if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+//     console.log("Fetched Blog Data:", blog); // Check the log here
+
+//     res.status(200).json({ success: true, data: blog });
+//   } catch (error) {
+//     console.error("Error fetching blog:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.getBlogBySlug = async (req, res) => {
-  try {
-    const blog = await Blog.findOneAndUpdate(
-      { slug: req.params.slug, status: "published" },
-      { $inc: { views: 1 } },
-      { new: true }
-    ).populate("author", "name");
+    try {
+        const blog = await Blog.findOneAndUpdate(
+            { slug: req.params.slug, status: "published" },
+            { $inc: { views: 1 } },
+            { new: true }
+        ).populate("author", "name");
 
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
+        if (!blog) return res.status(404).json({ message: "Blog not found" });
 
-    console.log("Fetched Blog Data:", blog); // Check the log here
+        // Manually add the _id to the response
+        const responseData = {
+            success: true,
+            data: {
+                _id: blog._id, // Add the _id here
+                title: blog.title,
+                slug: blog.slug,
+                thumbnail: blog.thumbnail,
+                excerpt: blog.excerpt,
+                category: blog.category,
+                tags: blog.tags,
+                read_time: blog.read_time,
+                status: blog.status,
+                is_featured: blog.is_featured,
+                views: blog.views,
+                author: blog.author,
+                createdAt: blog.createdAt,
+                updatedAt: blog.updatedAt,
+                content: blog.content,
+            }
+        };
 
-    res.status(200).json({ success: true, data: blog });
-  } catch (error) {
-    console.error("Error fetching blog:", error);
-    res.status(500).json({ message: error.message });
-  }
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error fetching blog:", error);
+        res.status(500).json({ message: error.message });
+    }
 };
+
 
 
 // Admin
