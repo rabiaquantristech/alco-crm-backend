@@ -10,7 +10,17 @@ const blogSchema = new mongoose.Schema(
             lowercase: true,
         },
         excerpt: { type: String },
-        content: { type: String },
+        // content: { type:  },
+        content: [
+            {
+                type: {
+                    type: String, // e.g., "h1", "h2", "p", "ul", "ol", "quote"
+                    required: true
+                },
+                text: { type: String }, // For paragraphs and headings
+                items: [{ text: { type: String } }] // For list items in ul/ol
+            }
+        ],
         thumbnail: { type: String },
         category: {
             type: String,
