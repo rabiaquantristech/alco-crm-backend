@@ -23,6 +23,7 @@ app.use(
   cors({
   origin: [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://alco-crm-frontend.vercel.app",
     "https://alco-cms-website.vercel.app",
   ],
