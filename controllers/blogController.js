@@ -41,6 +41,27 @@ exports.getBlogBySlug = async (req, res) => {
 };
 
 // Admin
+// exports.adminGetBlogs = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, status, category, search } = req.query;
+//     const query = {};
+//     if (status) query.status = status;
+//     if (category) query.category = category;
+//     if (search) query.title = { $regex: search, $options: "i" };
+
+//     const blogs = await Blog.find(query)
+//       .populate("author", "name")
+//       .sort({ createdAt: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     const total = await Blog.countDocuments(query);
+//     res.status(200).json({ success: true, data: blogs, meta: { page: Number(page), limit: Number(limit), total } });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.adminGetBlogs = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, search } = req.query;
@@ -48,19 +69,30 @@ exports.adminGetBlogs = async (req, res) => {
     if (status) query.status = status;
     if (category) query.category = category;
     if (search) query.title = { $regex: search, $options: "i" };
-
+ 
     const blogs = await Blog.find(query)
       .populate("author", "name")
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
-
+ 
     const total = await Blog.countDocuments(query);
-    res.status(200).json({ success: true, data: blogs, meta: { page: Number(page), limit: Number(limit), total } });
+ 
+    res.status(200).json({
+      success: true,
+      data: blogs,
+      meta: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit)), // ✅ Yeh add kiya
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+ 
 
 // exports.adminCreateBlog = async (req, res) => {
 //   try {
