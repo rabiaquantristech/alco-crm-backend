@@ -62,17 +62,52 @@ exports.adminGetBlogs = async (req, res) => {
   }
 };
 
+// exports.adminCreateBlog = async (req, res) => {
+//   try {
+//     const existing = await Blog.findOne({ title: req.body.title });
+//     if (existing) return res.status(400).json({ message: "Blog with this title already exists" });
+
+//     const blog = await Blog.create({ ...req.body, author: req.user.id });
+//     res.status(201).json({ success: true, data: blog });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.adminCreateBlog = async (req, res) => {
   try {
-    const existing = await Blog.findOne({ title: req.body.title });
-    if (existing) return res.status(400).json({ message: "Blog with this title already exists" });
+    const { title, slug } = req.body;
 
-    const blog = await Blog.create({ ...req.body, author: req.user.id });
-    res.status(201).json({ success: true, data: blog });
+    // ✅ Slug — manual diya toh woh use karo, nahi toh title se generate karo
+    const finalSlug = slug
+      ? slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+      : title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    // ✅ Duplicate slug check
+    const existing = await Blog.findOne({ slug: finalSlug });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Blog with this slug already exists",
+      });
+    }
+
+    // ✅ Blog create karo
+    const blog = await Blog.create({
+      ...req.body,
+      slug: finalSlug,
+      author: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: blog,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.adminUpdateBlog = async (req, res) => {
   try {
