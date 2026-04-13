@@ -188,15 +188,33 @@ exports.adminCreateBlog = async (req, res) => {
 
 
 
+// exports.adminUpdateBlog = async (req, res) => {
+//   try {
+//     const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+//     if (!blog) return res.status(404).json({ message: "Blog not found" });
+//     res.status(200).json({ success: true, data: blog });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.adminUpdateBlog = async (req, res) => {
-  try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
-    res.status(200).json({ success: true, data: blog });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    try {
+        // Find the blog by slug instead of id
+        const blog = await Blog.findOneAndUpdate(
+            { slug: req.params.slug, status: "published" }, // Use slug for the query
+            req.body,
+            { new: true }
+        );
+
+        if (!blog) return res.status(404).json({ message: "Blog not found" });
+        
+        res.status(200).json({ success: true, data: blog });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
+
 
 exports.adminDeleteBlog = async (req, res) => {
   try {
