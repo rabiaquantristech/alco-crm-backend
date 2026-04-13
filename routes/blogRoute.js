@@ -15,8 +15,7 @@ router.get("/public/:slug", getBlogBySlug);
 // Admin
 router.get("/", protect, authorize("super_admin", "admin"), adminGetBlogs);
 router.post("", protect, authorize("super_admin", "admin"), adminCreateBlog);
-// router.put("/:id", protect, authorize("super_admin", "admin"), adminUpdateBlog);
-router.put("/:slug", protect, authorize("super_admin", "admin"), adminUpdateBlog);
+router.put("/:id", protect, authorize("super_admin", "admin"), adminUpdateBlog);
 router.delete("/:id", protect, authorize("super_admin", "admin"), adminDeleteBlog);
 router.post("/:id/publish", protect, authorize("super_admin", "admin"), adminPublishBlog);
 
