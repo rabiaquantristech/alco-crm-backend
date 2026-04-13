@@ -76,14 +76,14 @@ exports.adminGetBlogs = async (req, res) => {
 
 exports.adminCreateBlog = async (req, res) => {
   try {
-    const { title, slug } = req.body;
+    const { title, slug, thumbnail } = req.body;
 
-    // ✅ Slug — manual diya toh woh use karo, nahi toh title se generate karo
+    // Slug generation logic
     const finalSlug = slug
       ? slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
       : title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    // ✅ Duplicate slug check
+    // Duplicate slug check
     const existing = await Blog.findOne({ slug: finalSlug });
     if (existing) {
       return res.status(400).json({
@@ -92,11 +92,12 @@ exports.adminCreateBlog = async (req, res) => {
       });
     }
 
-    // ✅ Blog create karo
+    // Blog creation with thumbnail
     const blog = await Blog.create({
       ...req.body,
       slug: finalSlug,
       author: req.user.id,
+      thumbnail, // Add thumbnail here
     });
 
     res.status(201).json({
@@ -107,6 +108,7 @@ exports.adminCreateBlog = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 exports.adminUpdateBlog = async (req, res) => {
