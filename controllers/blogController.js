@@ -1,7 +1,28 @@
 const Blog = require("../models/blogModel.js");
+const cloudinary = require("../config/cloudinary.js");
 
+export const uploadImage = async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const result = await cloudinary.uploader.upload(file.path, {
+      folder: "blog_thumbnails",
+    });
+
+    res.json({
+      url: result.secure_url,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Upload failed" });
+  }
+};
 // Public
-// getBlogs mein bhi same fix karo
 exports.getBlogs = async (req, res) => {
   try {
     // ✅ Yeh missing tha
@@ -57,69 +78,6 @@ exports.getBlogBySlug = async (req, res) => {
   }
 };
 
-// exports.getBlogBySlug = async (req, res) => {
-//     try {
-//         const blog = await Blog.findOneAndUpdate(
-//             { slug: req.params.slug, status: "published" },
-//             { $inc: { views: 1 } },
-//             { new: true }
-//         ).populate("author", "name");
-
-//         if (!blog) return res.status(404).json({ message: "Blog not found" });
-
-//         // Manually add the _id to the response
-//         const responseData = {
-//             success: true,
-//             data: {
-//                 _id: blog._id, // Add the _id here
-//                 title: blog.title,
-//                 slug: blog.slug,
-//                 thumbnail: blog.thumbnail,
-//                 excerpt: blog.excerpt,
-//                 category: blog.category,
-//                 tags: blog.tags,
-//                 read_time: blog.read_time,
-//                 status: blog.status,
-//                 is_featured: blog.is_featured,
-//                 views: blog.views,
-//                 author: blog.author,
-//                 createdAt: blog.createdAt,
-//                 updatedAt: blog.updatedAt,
-//                 content: blog.content,
-//             }
-//         };
-
-//         res.status(200).json(responseData);
-//     } catch (error) {
-//         console.error("Error fetching blog:", error);
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-
-
-
-// Admin
-// exports.adminGetBlogs = async (req, res) => {
-//   try {
-//     const { page = 1, limit = 10, status, category, search } = req.query;
-//     const query = {};
-//     if (status) query.status = status;
-//     if (category) query.category = category;
-//     if (search) query.title = { $regex: search, $options: "i" };
-
-//     const blogs = await Blog.find(query)
-//       .populate("author", "name")
-//       .sort({ createdAt: -1 })
-//       .skip((page - 1) * limit)
-//       .limit(Number(limit));
-
-//     const total = await Blog.countDocuments(query);
-//     res.status(200).json({ success: true, data: blogs, meta: { page: Number(page), limit: Number(limit), total } });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
 exports.adminGetBlogs = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, search } = req.query;
@@ -150,19 +108,6 @@ exports.adminGetBlogs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
-// exports.adminCreateBlog = async (req, res) => {
-//   try {
-//     const existing = await Blog.findOne({ title: req.body.title });
-//     if (existing) return res.status(400).json({ message: "Blog with this title already exists" });
-
-//     const blog = await Blog.create({ ...req.body, author: req.user.id });
-//     res.status(201).json({ success: true, data: blog });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 
 exports.adminCreateBlog = async (req, res) => {
   try {
@@ -198,8 +143,6 @@ exports.adminCreateBlog = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
 
 exports.adminUpdateBlog = async (req, res) => {
   try {

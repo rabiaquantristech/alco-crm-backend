@@ -5,8 +5,11 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 const {
   getBlogs, getBlogBySlug,
   adminGetBlogs, adminCreateBlog,
-  adminUpdateBlog, adminDeleteBlog, adminPublishBlog
+  adminUpdateBlog, adminDeleteBlog, adminPublishBlog,
+  uploadImage
 } = require("../controllers/blogController.js");
+
+router.post("/upload", upload.single("image"), uploadImage);
 
 // Public
 router.get("/public", getBlogs);
