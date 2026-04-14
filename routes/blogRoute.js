@@ -10,27 +10,42 @@ const {
 const cloudinary = require("../config/cloudinary.js");
 const multer = require("multer");
 
-const storage = multer.diskStorage({
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + "-" + file.originalname);
-    },
+// const storage = multer.diskStorage({
+//     filename: (req, file, cb) => {
+//         cb(null, Date.now() + "-" + file.originalname);
+//     },
+// });
+
+const upload = multer({
+  storage: multer.memoryStorage(),
 });
 
-const upload = multer({ storage });
-
-const uploadImage = async (req, res) => {
-    try {
-        const file = req.file;
-
-        const result = await cloudinary.uploader.upload(file.path, {
-            folder: "blog-image",
-        });
-
-        res.json({ url: result.secure_url });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Upload failed" });
+export const uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
     }
+
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "blog-image" },
+      (error, result) => {
+        if (error) {
+          console.log("Cloudinary Error:", error);
+          return res.status(500).json({ message: "Upload failed" });
+        }
+
+        res.json({
+          url: result.secure_url,
+        });
+      }
+    );
+
+    stream.end(req.file.buffer);
+
+  } catch (error) {
+    console.log("Server Error:", error);
+    res.status(500).json({ message: "Upload failed" });
+  }
 };
 
 
