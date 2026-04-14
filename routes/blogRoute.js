@@ -8,6 +8,7 @@ const {
   adminUpdateBlog, adminDeleteBlog, adminPublishBlog,
   uploadImage
 } = require("../controllers/blogController.js");
+const cloudinary = require("../config/cloudinary.js");
 const multer = require("multer");
 
 const storage = multer.diskStorage({
@@ -17,6 +18,22 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+const uploadImage = async (req, res) => {
+    try {
+        const file = req.file;
+
+        const result = await cloudinary.uploader.upload(file.path, {
+            folder: "blog-image",
+        });
+
+        res.json({ url: result.secure_url });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Upload failed" });
+    }
+};
+
 
 router.post("/upload", upload.single("image"), uploadImage);
 

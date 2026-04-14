@@ -1,27 +1,6 @@
 const Blog = require("../models/blogModel.js");
-const cloudinary = require("../config/cloudinary.js");
 
-export const uploadImage = async (req, res) => {
-  try {
-    const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: "blog_thumbnails",
-    });
-
-    res.json({
-      url: result.secure_url,
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Upload failed" });
-  }
-};
 // Public
 exports.getBlogs = async (req, res) => {
   try {
