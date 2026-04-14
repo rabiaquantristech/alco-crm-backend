@@ -26,23 +26,18 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: "blog-images" },
-      (error, result) => {
-        if (error) {
-          console.log(error);
-          return res.status(500).json({ message: "Upload failed" });
-        }
+    const base64 = req.file.buffer.toString("base64");
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
 
-        return res.json({ url: result.secure_url });
-      }
-    );
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: "blog-images",
+    });
 
-    stream.end(req.file.buffer);
+    return res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Upload failed" });
+    console.log("UPLOAD ERROR:", err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
