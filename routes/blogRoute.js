@@ -5,8 +5,7 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 const {
   getBlogs, getBlogBySlug,
   adminGetBlogs, adminCreateBlog,
-  adminUpdateBlog, adminDeleteBlog, adminPublishBlog,
-  uploadImage
+  adminUpdateBlog, adminDeleteBlog, adminPublishBlog
 } = require("../controllers/blogController.js");
 const cloudinary = require("../config/cloudinary.js");
 const multer = require("multer");
