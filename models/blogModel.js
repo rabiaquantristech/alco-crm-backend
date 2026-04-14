@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema(
     {
+        _id: { type: String, required: true },
         title: { type: String, required: true },
         // slug: { type: String, unique: true, lowercase: true },
         slug: {
@@ -14,11 +15,14 @@ const blogSchema = new mongoose.Schema(
         content: [
             {
                 type: {
-                    type: String, // e.g., "h1", "h2", "p", "ul", "ol", "quote"
+                    type: String,
                     required: true
                 },
-                text: { type: String }, // For paragraphs and headings
-                items: [{ text: { type: String } }] // For list items in ul/ol
+                text: { type: String },
+                items: [{
+                    bold: { type: String },
+                    text: { type: String },
+                }]
             }
         ],
         thumbnail: { type: String },
