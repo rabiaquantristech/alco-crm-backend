@@ -5,24 +5,82 @@ const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
 const generateColor = require("../utils/generateColor");
 
 // ✅ GET ALL USERS
+// without search, pagination and role
+// exports.getAllUsers = async (req, res) => {
+//   try {
+//     const requesterRole = req.user.role;
+
+//     let query = {};
+
+//     if (requesterRole === "admin") {
+//       // ✅ Admin ko sirf non-admin users dikhao
+//       query = {
+//         role: { $nin: ["super_admin", "admin"] },
+//       };
+//     }
+//     // super_admin ko sab dikhao — query empty rahegi
+
+//     const users = await User.find(query).select("-password");
+
+//     res.status(200).json({
+//       success: true,
+//       count: users.length,
+//       users,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.getAllUsers = async (req, res) => {
   try {
     const requesterRole = req.user.role;
 
+    // query params
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      role,
+    } = req.query;
+
+    const skip = (page - 1) * limit;
+
     let query = {};
 
+    // 🔐 Role-based access control
     if (requesterRole === "admin") {
-      // ✅ Admin ko sirf non-admin users dikhao
-      query = {
-        role: { $nin: ["super_admin", "admin"] },
-      };
+      query.role = { $nin: ["super_admin", "admin"] };
     }
-    // super_admin ko sab dikhao — query empty rahegi
 
-    const users = await User.find(query).select("-password");
+    // 🔎 Search (name/email)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 🎯 Filter by role (optional)
+    if (role) {
+      query.role = query.role
+        ? { ...query.role, $eq: role }
+        : role;
+    }
+
+    const users = await User.find(query)
+      .select("-password")
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await User.countDocuments(query);
 
     res.status(200).json({
       success: true,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
       count: users.length,
       users,
     });
