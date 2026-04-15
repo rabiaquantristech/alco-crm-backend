@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema(
     {
-        _id: { type: String, required: true },
+        _id: { type: String },
         title: { type: String, required: true },
         // slug: { type: String, unique: true, lowercase: true },
         slug: {
