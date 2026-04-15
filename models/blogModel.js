@@ -46,13 +46,14 @@ const blogSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-blogSchema.set("toJSON", {
-  virtuals: true,
-  transform: function (doc, ret) {
-    ret.id = ret._id;     // ✅ frontend ke liye
-    delete ret._id;
-    delete ret.__v;
-  },
+blogSchema.set("toObject", {
+    virtuals: true,
+    transform: function (doc, ret) {
+        ret.id = ret._id.toString(); // 👈 ensure string
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+    },
 });
 
 // blogSchema.pre("save", function (next) {
