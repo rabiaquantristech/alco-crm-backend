@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema(
     {
-        _id: { type: String },
+        // _id: { type: String, required: true },
+        blog_id: { type: String, unique: true },
         title: { type: String, required: true },
         // slug: { type: String, unique: true, lowercase: true },
         slug: {
@@ -44,6 +45,15 @@ const blogSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+blogSchema.set("toJSON", {
+  virtuals: true,
+  transform: function (doc, ret) {
+    ret.id = ret._id;     // ✅ frontend ke liye
+    delete ret._id;
+    delete ret.__v;
+  },
+});
 
 // blogSchema.pre("save", function (next) {
 //   if (!this.slug && this.title) {
