@@ -14,17 +14,31 @@ exports.getBlogs = async (req, res) => {
       { excerpt: { $regex: search, $options: "i" } },
     ];
 
+    // const blogs = await Blog.find(query)
+    //   .populate("author", "name")
+    //   .sort({ createdAt: -1 })
+    //   .skip((Number(page) - 1) * Number(limit))
+    //   .limit(Number(limit));
+
     const blogs = await Blog.find(query)
       .populate("author", "name")
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
 
+    const formattedBlogs = blogs.map((blog) => {
+      const obj = blog.toObject(); // 👈 important
+      obj.id = obj._id;
+      delete obj._id;
+      delete obj.__v;
+      return obj;
+    });
+
     const total = await Blog.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      data: blogs,
+      data: formattedBlogs,
       meta: {
         page: Number(page),
         limit: Number(limit),
