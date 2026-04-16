@@ -80,9 +80,9 @@ exports.adminGetBlogBySlug = async (req, res) => {
     if (!blog) return res.status(404).json({ message: "Blog not found" });
 
     const blogObj = blog.toObject({ versionKey: false });
-    
+
     console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -178,20 +178,34 @@ exports.adminUpdateBlog = async (req, res) => {
 
 exports.adminDeleteBlog = async (req, res) => {
   try {
-    await Blog.findByIdAndDelete(req.params.id);
+    await Blog.findOneAndDelete({ slug: req.params.id });
     res.status(200).json({ success: true, message: "Blog deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// exports.adminPublishBlog = async (req, res) => {
+//   try {
+//     const blog = await Blog.findByIdAndUpdate(
+//       req.params.id,
+//       { status: "published" },
+//       { new: true }
+//     );
+//     res.status(200).json({ success: true, data: blog });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.adminPublishBlog = async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(
-      req.params.id,
+    const blog = await Blog.findOneAndUpdate(
+      { $or: [{ slug: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
       { status: "published" },
       { new: true }
     );
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
     res.status(200).json({ success: true, data: blog });
   } catch (error) {
     res.status(500).json({ message: error.message });
