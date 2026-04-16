@@ -79,12 +79,15 @@ exports.adminGetBlogBySlug = async (req, res) => {
 
     if (!blog) return res.status(404).json({ message: "Blog not found" });
 
-    const blogObj = blog.toObject();
+    const blogObj = blog.toObject({ versionKey: false });
+    
+    console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
+    
     res.status(200).json({
       success: true,
       data: {
         ...blogObj,
-        id: blogObj.slug, // ✅ slug ko id ki jagah use karo — reliable hai
+        id: String(blogObj._id), // ✅ String() safe hai toString() se
       },
     });
   } catch (error) {
@@ -160,8 +163,9 @@ exports.adminCreateBlog = async (req, res) => {
 
 exports.adminUpdateBlog = async (req, res) => {
   try {
+    // ✅ id ki jagah slug se update karo
     const blog = await Blog.findOneAndUpdate(
-      { $or: [{ slug: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+      { slug: req.params.id }, // req.params.id mein slug aayega
       req.body,
       { new: true }
     );
