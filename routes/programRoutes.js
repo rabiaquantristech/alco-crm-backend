@@ -8,6 +8,7 @@ const {
   getProgramBySlug,
   getProgramCurriculum,
   getProgramBatches,
+  getProgramsPublic,
   // Admin — Programs
   adminGetPrograms,
   adminCreateProgram,
@@ -47,6 +48,7 @@ router.get("/public", getPrograms);
 router.get("/public/:slug", getProgramBySlug);
 router.get("/public/:slug/curriculum", getProgramCurriculum);
 router.get("/public/:slug/batches", getProgramBatches);
+router.get("/name", getProgramsPublic);
 
 // ── FIRST ADMIN — Programs ──
 router.get("/", protect, authorize("admin", "super_admin"), adminGetPrograms);

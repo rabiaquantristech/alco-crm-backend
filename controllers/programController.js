@@ -27,6 +27,22 @@ exports.getPrograms = async (req, res) => {
     }
 };
 
+// GET /api/v1/programs — List all active programs for Public
+exports.getProgramsPublic = async (req, res) => {
+    try {
+        const programs = await Program.find({ status: "active" })
+            .select("_id name")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: programs,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // GET /api/v1/programs/:slug — Get program details
 exports.getProgramBySlug = async (req, res) => {
     try {
