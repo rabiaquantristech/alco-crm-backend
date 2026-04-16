@@ -29,11 +29,9 @@ app.use(
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // 🔥 add
     allowedHeaders: ["Content-Type", "Authorization"], // 🔥 add
-    // credentials: true,
+    credentials: true,
   })
 );
-
-app.options("*", cors());
 
 // Session — passport se pehle hona chahiye
 app.use(
@@ -47,10 +45,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// app.use(async (req, res, next) => {
-//   await connectDB();
-//   next();
-// });
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Routes
 app.use("/api/auth", authRoute);
