@@ -49,7 +49,7 @@ router.get("/public", getBlogs);
 router.get("/public/:slug", getBlogBySlug);
 
 // Admin
-router.get("/:slug", protect, authorize("super_admin", "admin"), adminGetBlogBySlug);
+router.get("/admin/:slug", protect, authorize("super_admin", "admin"), adminGetBlogBySlug);
 router.get("/", protect, authorize("super_admin", "admin"), adminGetBlogs);
 router.post("", protect, authorize("super_admin", "admin"), adminCreateBlog);
 router.put("/:id", protect, authorize("super_admin", "admin"), adminUpdateBlog);
