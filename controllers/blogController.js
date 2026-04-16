@@ -213,14 +213,16 @@ exports.adminUpdateBlog = async (req, res) => {
 
     // Proceed to update the blog
     const updatedBlog = await Blog.findOneAndUpdate(
-      { slug: req.params.slug }, // Find by slug
+      { slug: req.params.slug },
       { title, slug },
       { new: true }
     );
 
     if (!updatedBlog) {
+      console.error(`Blog with slug ${req.params.slug} not found`);
       return res.status(404).json({ success: false, message: "Blog not found" });
     }
+
 
     res.status(200).json({ success: true, message: "Blog updated", data: updatedBlog });
   } catch (error) {
