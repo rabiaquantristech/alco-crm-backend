@@ -72,28 +72,56 @@ exports.getBlogBySlug = async (req, res) => {
 };
 
 // Naya admin endpoint add karo
-exports.adminGetBlogBySlug = async (req, res) => {
+// exports.adminGetBlogBySlug = async (req, res) => {
+//   try {
+//     const blog = await Blog.findOne({ slug: req.params.slug })
+//       .populate("author", "name");
+
+//     if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+//     const blogObj = blog.toObject({ versionKey: false });
+
+//     console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         ...blogObj,
+//         id: String(blogObj._id), // ✅ String() safe hai toString() se
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+exports.adminUpdateBlog = async (req, res) => {
+  
   try {
-    const blog = await Blog.findOne({ slug: req.params.slug })
-      .populate("author", "name");
+    const { title, slug } = req.body;
+    // Check if the title already exists in another blog
+    const existingBlog = await Blog.findOne({ title: title, slug: { $ne: req.params.slug } });
 
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
+    if (existingBlog) {
+      return res.status(400).json({ success: false, message: "Blog with this title already exists" });
+    }
 
-    const blogObj = blog.toObject({ versionKey: false });
+    // Proceed to update the blog
+    const updatedBlog = await Blog.findOneAndUpdate(
+      { slug: req.params.slug }, // Find by slug
+      { title, slug },
+      { new: true }
+    );
 
-    console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
+    if (!updatedBlog) {
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        ...blogObj,
-        id: String(blogObj._id), // ✅ String() safe hai toString() se
-      },
-    });
+    res.status(200).json({ success: true, message: "Blog updated", data: updatedBlog });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 exports.adminGetBlogs = async (req, res) => {
   try {
