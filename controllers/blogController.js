@@ -72,56 +72,28 @@ exports.getBlogBySlug = async (req, res) => {
 };
 
 // Naya admin endpoint add karo
-// exports.adminGetBlogBySlug = async (req, res) => {
-//   try {
-//     const blog = await Blog.findOne({ slug: req.params.slug })
-//       .populate("author", "name");
-
-//     if (!blog) return res.status(404).json({ message: "Blog not found" });
-
-//     const blogObj = blog.toObject({ versionKey: false });
-
-//     console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
-
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         ...blogObj,
-//         id: String(blogObj._id), // ✅ String() safe hai toString() se
-//       },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-exports.adminUpdateBlog = async (req, res) => {
-  
+exports.adminGetBlogBySlug = async (req, res) => {
   try {
-    const { title, slug } = req.body;
-    // Check if the title already exists in another blog
-    const existingBlog = await Blog.findOne({ title: title, slug: { $ne: req.params.slug } });
+    const blog = await Blog.findOne({ slug: req.params.slug })
+      .populate("author", "name");
 
-    if (existingBlog) {
-      return res.status(400).json({ success: false, message: "Blog with this title already exists" });
-    }
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
 
-    // Proceed to update the blog
-    const updatedBlog = await Blog.findOneAndUpdate(
-      { slug: req.params.slug }, // Find by slug
-      { title, slug },
-      { new: true }
-    );
+    const blogObj = blog.toObject({ versionKey: false });
 
-    if (!updatedBlog) {
-      return res.status(404).json({ success: false, message: "Blog not found" });
-    }
+    console.log("blogObj._id:", blogObj._id); // ✅ dekho kya aata hai
 
-    res.status(200).json({ success: true, message: "Blog updated", data: updatedBlog });
+    res.status(200).json({
+      success: true,
+      data: {
+        ...blogObj,
+        id: String(blogObj._id), // ✅ String() safe hai toString() se
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 exports.adminGetBlogs = async (req, res) => {
   try {
@@ -184,47 +156,79 @@ exports.adminCreateBlog = async (req, res) => {
   }
 };
 
+// exports.adminUpdateBlog = async (req, res) => {
+//   try {
+//     const { title, ...rest } = req.body;
+
+//     // ✅ Condition 3 — title se naya slug banao
+//     const newSlug = title
+//       ? title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+//       : null;
+
+//     // ✅ Condition 2 — slug already exist karta hai kisi AUR blog mein
+//     if (newSlug) {
+//       const existing = await Blog.findOne({
+//         slug: newSlug,
+//         slug: { $ne: req.params.id }, // current blog ko exclude karo
+//       });
+//       if (existing) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Blog with this title already exists",
+//         });
+//       }
+//     }
+
+//     const updateData = {
+//       ...rest,
+//       ...(title && { title }),
+//       ...(newSlug && { slug: newSlug }), // ✅ slug update
+//     };
+
+//     const blog = await Blog.findOneAndUpdate(
+//       { slug: req.params.id },
+//       updateData,
+//       { new: true }
+//     );
+
+//     if (!blog) return res.status(404).json({ message: "Blog not found" });
+//     res.status(200).json({ success: true, data: blog });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+const Blog = require('../models/Blog'); // Adjust the path according to your project structure
+
+// Function to update a blog
 exports.adminUpdateBlog = async (req, res) => {
   try {
-    const { title, ...rest } = req.body;
+    const { title, slug } = req.body;
 
-    // ✅ Condition 3 — title se naya slug banao
-    const newSlug = title
-      ? title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-      : null;
+    // Check if the title already exists in another blog
+    const existingBlog = await Blog.findOne({ title: title, slug: { $ne: req.params.slug } });
 
-    // ✅ Condition 2 — slug already exist karta hai kisi AUR blog mein
-    if (newSlug) {
-      const existing = await Blog.findOne({
-        slug: newSlug,
-        slug: { $ne: req.params.id }, // current blog ko exclude karo
-      });
-      if (existing) {
-        return res.status(400).json({
-          success: false,
-          message: "Blog with this title already exists",
-        });
-      }
+    if (existingBlog) {
+      return res.status(400).json({ success: false, message: "Blog with this title already exists" });
     }
 
-    const updateData = {
-      ...rest,
-      ...(title && { title }),
-      ...(newSlug && { slug: newSlug }), // ✅ slug update
-    };
-
-    const blog = await Blog.findOneAndUpdate(
-      { slug: req.params.id },
-      updateData,
+    // Proceed to update the blog
+    const updatedBlog = await Blog.findOneAndUpdate(
+      { slug: req.params.slug }, // Find by slug
+      { title, slug },
       { new: true }
     );
 
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
-    res.status(200).json({ success: true, data: blog });
+    if (!updatedBlog) {
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Blog updated", data: updatedBlog });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Export other functions as needed
 
 exports.adminDeleteBlog = async (req, res) => {
   try {
