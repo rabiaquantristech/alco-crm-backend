@@ -71,6 +71,27 @@ exports.getBlogBySlug = async (req, res) => {
   }
 };
 
+// Naya admin endpoint add karo
+exports.adminGetBlogBySlug = async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug })
+      .populate("author", "name"); // ✅ status filter nahi
+
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+    const blogObj = blog.toObject();
+    res.status(200).json({
+      success: true,
+      data: {
+        ...blogObj,
+        id: blogObj._id.toString(),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.adminGetBlogs = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, search } = req.query;

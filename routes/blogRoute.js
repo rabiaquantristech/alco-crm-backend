@@ -5,7 +5,8 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 const {
   getBlogs, getBlogBySlug,
   adminGetBlogs, adminCreateBlog,
-  adminUpdateBlog, adminDeleteBlog, adminPublishBlog
+  adminUpdateBlog, adminDeleteBlog, adminPublishBlog,
+  adminGetBlogBySlug
 } = require("../controllers/blogController.js");
 const cloudinary = require("../config/cloudinary.js");
 const multer = require("multer");
@@ -48,6 +49,7 @@ router.get("/public", getBlogs);
 router.get("/public/:slug", getBlogBySlug);
 
 // Admin
+router.get("/:slug", protect, authorize("super_admin", "admin"), adminGetBlogBySlug);
 router.get("/", protect, authorize("super_admin", "admin"), adminGetBlogs);
 router.post("", protect, authorize("super_admin", "admin"), adminCreateBlog);
 router.put("/:id", protect, authorize("super_admin", "admin"), adminUpdateBlog);
