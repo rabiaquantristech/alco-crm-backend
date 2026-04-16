@@ -201,7 +201,7 @@ exports.adminDeleteBlog = async (req, res) => {
 exports.adminPublishBlog = async (req, res) => {
   try {
     const blog = await Blog.findOneAndUpdate(
-      { $or: [{ slug: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+      { slug: req.params.id },
       { status: "published" },
       { new: true }
     );
