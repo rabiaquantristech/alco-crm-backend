@@ -3,17 +3,19 @@ const router = express.Router();
 const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
 const {
-  getBlogs,
-  getBlogBySlug,
-  adminGetBlogs,
-  adminCreateBlog,
-  adminUpdateBlog,
-  adminDeleteBlog,
-  adminPublishBlog,
+  getBlogs, getBlogBySlug,
+  adminGetBlogs, adminCreateBlog,
+  adminUpdateBlog, adminDeleteBlog, adminPublishBlog,
   adminGetBlogBySlug
 } = require("../controllers/blogController.js");
 const cloudinary = require("../config/cloudinary.js");
 const multer = require("multer");
+
+// const storage = multer.diskStorage({
+//     filename: (req, file, cb) => {
+//         cb(null, Date.now() + "-" + file.originalname);
+//     },
+// });
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -40,19 +42,18 @@ const uploadImage = async (req, res) => {
   }
 };
 
-// Image upload route
 router.post("/upload", upload.single("image"), uploadImage);
 
-// Public routes
+// Public
 router.get("/public", getBlogs);
 router.get("/public/:slug", getBlogBySlug);
 
-// Admin routes
+// Admin
 router.get("/admin/:slug", protect, authorize("super_admin", "admin"), adminGetBlogBySlug);
 router.get("/", protect, authorize("super_admin", "admin"), adminGetBlogs);
 router.post("", protect, authorize("super_admin", "admin"), adminCreateBlog);
-router.put("/:slug", protect, authorize("super_admin", "admin"), adminUpdateBlog); // Changed to :slug
-router.delete("/:slug", protect, authorize("super_admin", "admin"), adminDeleteBlog); // Changed to :slug
-router.post("/:slug/publish", protect, authorize("super_admin", "admin"), adminPublishBlog); // Changed to :slug
+router.put("/:id", protect, authorize("super_admin", "admin"), adminUpdateBlog);
+router.delete("/:id", protect, authorize("super_admin", "admin"), adminDeleteBlog);
+router.post("/:id/publish", protect, authorize("super_admin", "admin"), adminPublishBlog);
 
 module.exports = router;
