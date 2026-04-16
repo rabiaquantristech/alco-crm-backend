@@ -75,7 +75,7 @@ exports.getBlogBySlug = async (req, res) => {
 exports.adminGetBlogBySlug = async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug })
-      .populate("author", "name"); // ✅ status filter nahi
+      .populate("author", "name");
 
     if (!blog) return res.status(404).json({ message: "Blog not found" });
 
@@ -84,7 +84,7 @@ exports.adminGetBlogBySlug = async (req, res) => {
       success: true,
       data: {
         ...blogObj,
-        id: blogObj._id.toString(),
+        id: blogObj.slug, // ✅ slug ko id ki jagah use karo — reliable hai
       },
     });
   } catch (error) {
@@ -160,7 +160,11 @@ exports.adminCreateBlog = async (req, res) => {
 
 exports.adminUpdateBlog = async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const blog = await Blog.findOneAndUpdate(
+      { $or: [{ slug: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+      req.body,
+      { new: true }
+    );
     if (!blog) return res.status(404).json({ message: "Blog not found" });
     res.status(200).json({ success: true, data: blog });
   } catch (error) {
