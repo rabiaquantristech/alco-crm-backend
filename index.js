@@ -112,7 +112,7 @@ const connectDB = require("./config/db.js");
 
 const app = express();
 
-// ✅ STEP 1: CORS must be the VERY FIRST middleware
+// CORS Configuration
 const corsOptions = {
   origin: [
     "http://localhost:3000",
@@ -126,14 +126,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight requests
 
-// ✅ STEP 2: Explicitly handle OPTIONS preflight for ALL routes
-app.options("*", cors(corsOptions));
-
-// ✅ STEP 3: Body parser AFTER cors
+// Body parser
 app.use(express.json());
 
-// Session & Passport
+// Session Configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "secret",
@@ -142,17 +140,18 @@ app.use(
   })
 );
 
+// Passport Initialization
 app.use(passport.initialize());
 app.use(passport.session());
 
-// DB connection per request (for Vercel serverless)
+// Database Connection Middleware
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
     console.error("DB connection failed:", err.message);
-    res.status(500).json({ success: false, message: "Database connection error" });
+    return res.status(500).json({ success: false, message: "Database connection error" });
   }
 });
 
@@ -164,6 +163,7 @@ app.use("/api/v1/leads", leadRoutes);
 app.use("/api/v1/programs", programRoutes);
 app.use("/api/v1/blogs", blogRoutes);
 
+// Health Check Endpoint
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -171,15 +171,22 @@ app.get("/", (req, res) => {
   });
 });
 
-connectDB()
-  .then(() => {
+// Start the Server
+const startServer = async () => {
+  try {
+    await connectDB(); // Initial connection for server start
     console.log("Database Connected");
-    if (process.env.NODE_ENV !== "production") {
-      app.listen(process.env.PORT || 5000, () => {
-        console.log(`Server running on http://localhost:${process.env.PORT || 5000}`);
-      });
-    }
-  })
-  .catch((err) => console.error("DB Error:", err));
+    
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("DB Error:", err);
+  }
+};
+
+startServer();
 
 module.exports = app;
+
