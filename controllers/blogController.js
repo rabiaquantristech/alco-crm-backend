@@ -197,7 +197,7 @@ exports.adminCreateBlog = async (req, res) => {
 //     res.status(500).json({ message: error.message });
 //   }
 // };
-const Blog = require('../models/Blog'); // Adjust the path according to your project structure
+
 
 // Function to update a blog
 exports.adminUpdateBlog = async (req, res) => {
