@@ -21,32 +21,36 @@ app.use(express.json());
 
 app.use(
   cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://alco-crm-frontend.vercel.app",
-    "https://alco-cms-website.vercel.app",
-  ],
-  credentials: true,
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://alco-crm-frontend.vercel.app",
+      "https://alco-cms-website.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // 🔥 add
+    allowedHeaders: ["Content-Type", "Authorization"], // 🔥 add
+    // credentials: true,
   })
 );
+
+app.options("*", cors());
 
 // Session — passport se pehle hona chahiye
 app.use(
   session({
-  secret: process.env.SESSION_SECRET || "secret",
-  resave: false,
-  saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
   })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
-});
+// app.use(async (req, res, next) => {
+//   await connectDB();
+//   next();
+// });
 
 // Routes
 app.use("/api/auth", authRoute);
