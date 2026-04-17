@@ -273,7 +273,7 @@ exports.deleteAllUsers = async (req, res) => {
 //     }
 
 //     // ✅ Role validation — YAHAN ADD KARO
-//     const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "user"];
+//     const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "finance_manager", "user"];
 //     if (role && !allowedRoles.includes(role)) {
 //       return res.status(400).json({ message: "Invalid role" });
 //     }
@@ -318,7 +318,7 @@ exports.createUser = async (req, res) => {
     }
 
     // ✅ Role validation
-    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "user"];
+    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "finance_manager", "user"];
     if (role && !allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -377,7 +377,7 @@ exports.createUser = async (req, res) => {
     }
 
     // ✅ Role validation
-    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "user"];
+    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "finance_manager", "user"];
     if (role && !allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -438,6 +438,7 @@ exports.assignRole = async (req, res) => {
       "sales_manager",
       "sales_rep",
       "support",
+      "finance_manager",
       "user"
     ];
     if (!allowedRoles.includes(role)) {

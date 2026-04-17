@@ -22,13 +22,14 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      // enum: ["admin", "sales_manager", "sales", "support", "user"],
+      // enum: ["admin", "sales_manager", "sales", "support", "finance_manager", "user"],
       enum: [
         "super_admin",
         "admin",
         "sales_manager",
         "sales_rep",
         "support",
+        "finance_manager",
         "user"
       ],
 

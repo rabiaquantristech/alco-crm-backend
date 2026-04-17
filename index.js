@@ -102,8 +102,8 @@ const passport = require("./config/passport.js");
 const authRoute = require("./routes/authRoute.js");
 const userRoute = require("./routes/userRoute.js");
 const adminRoute = require("./routes/adminRoute.js");
-const leadRoutes = require("./routes/leadRoutes.js");
-const programRoutes = require("./routes/programRoutes.js");
+const leadRoutes = require("./routes/leadRoute.js");
+const programRoutes = require("./routes/programRoute.js");
 const blogRoutes = require("./routes/blogRoute.js");
 const connectDB = require("./config/db.js");
 
