@@ -175,8 +175,16 @@ router.get("/manager-dashboard", protect, authorize("sales_manager", "sales_rep"
   res.json({ message: "Welcome Manager" });
 });
 
+router.get("/rep-dashboard", protect, authorize("sales_manager", "sales_rep"), (req, res) => {
+  res.json({ message: "Welcome Sales Rep" });
+});
+
 router.get("/support-dashboard", protect, authorize("support"), (req, res) => {
   res.json({ message: "Welcome Support" });
+});
+
+router.get("/finance-dashboard", protect, authorize("sales_manager", "sales_rep"), (req, res) => {
+  res.json({ message: "Welcome Finance Manager" });
 });
 
 router.get("/user-dashboard", protect, authorize("user"), (req, res) => {

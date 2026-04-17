@@ -97,14 +97,23 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
+require("./jobs/payment/paymentCron.js");
+
 const passport = require("./config/passport.js");
 
+// Routes
 const authRoute = require("./routes/authRoute.js");
 const userRoute = require("./routes/userRoute.js");
 const adminRoute = require("./routes/adminRoute.js");
-const leadRoutes = require("./routes/leadRoute.js");
-const programRoutes = require("./routes/programRoute.js");
-const blogRoutes = require("./routes/blogRoute.js");
+const enrollmentRoute  = require("./routes/enrollmentRoute.js");
+const financeRoute   = require("./routes/financeRoute.js");
+const accessRoute = require("./routes/accessRoute.js")
+const leadRoute = require("./routes/leadRoute.js");
+const programRoute = require("./routes/programRoute.js");
+const auditRoute = require("./routes/auditRoute.js");
+const blogRoute = require("./routes/blogRoute.js");
+
+
 const connectDB = require("./config/db.js");
 
 const app = express();
@@ -157,9 +166,13 @@ app.use(async (req, res, next) => {
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/admin", adminRoute);
-app.use("/api/v1/leads", leadRoutes);
-app.use("/api/v1/programs", programRoutes);
-app.use("/api/v1/blogs", blogRoutes);
+app.use("/api/v1/enrollments", enrollmentRoute);
+app.use("/api/v1/finance", financeRoute);
+app.use("/api/v1/access", accessRoute);
+app.use("/api/v1/leads", leadRoute);
+app.use("/api/v1/programs", programRoute);
+app.use("/api/v1/audit-logs", auditRoute);
+app.use("/api/v1/blogs", blogRoute);
 
 app.get("/", (req, res) => {
   res.status(200).json({
