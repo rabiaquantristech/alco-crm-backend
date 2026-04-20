@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
+const cloudinary = require("../config/cloudinary.js");  
+const multer = require("multer");                        
 const {
   // Public
   getPrograms,
@@ -41,7 +43,60 @@ const {
   adminDeleteBatch,
 } = require("../controllers/programController.js");
 
+// ── Multer Memory Storage ──
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 
+// ── Audio Upload Handler ──
+const uploadAudio = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No audio file uploaded" });
+    }
+
+    const allowedMimeTypes = [
+      "audio/mpeg", "audio/mp3", "audio/wav",
+      "audio/ogg", "audio/aac", "audio/mp4", "audio/x-m4a",
+    ];
+
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file type. Only audio files allowed.",
+      });
+    }
+
+    const base64 = req.file.buffer.toString("base64");
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: "lesson-audios",
+      resource_type: "video",  // Cloudinary audio = video resource type
+    });
+
+    return res.status(200).json({
+      success: true,
+      url: result.secure_url,
+      public_id: result.public_id,
+      duration: result.duration,
+      format: result.format,
+    });
+
+  } catch (err) {
+    console.log("AUDIO UPLOAD ERROR:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ── AUDIO UPLOAD ROUTE ──
+router.post(
+  "/upload-audio",
+  protect,
+  authorize("admin", "super_admin"),
+  upload.single("audio"),
+  uploadAudio
+);
 
 // ── PUBLIC ──
 router.get("/public", getPrograms);
