@@ -229,23 +229,41 @@ const allowedOrigins = [
   "https://alco-cms-website.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow requests without origin (like Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("CORS not allowed: " + origin));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // allow requests without origin (like Postman)
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       }
+//       return callback(new Error("CORS not allowed: " + origin));
+//     },
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   })
+// );
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed: " + origin));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 // ✅ Preflight (VERY IMPORTANT)
-app.options("*", cors());
+app.options("*", cors(corsOptions)); // ✅ same config
+
+// ✅ Preflight (VERY IMPORTANT)
+// app.options("*", cors());
 
 
 // ======================
