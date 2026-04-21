@@ -1,3 +1,4 @@
+// models/userModel.js — UPDATED
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -9,9 +10,27 @@ const userSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
+      // ✅ old users ka email nahi hoga — required hataya, sparse index lagaya
       unique: true,
+      sparse: true, // null values unique constraint se exempt hongi
       lowercase: true,
+      default: null,
+    },
+
+    phone: {
+      type: String,
+      unique: true,
+      sparse: true, // sirf old users ke paas hoga
+      default: null,
+    },
+
+    // ✅ name se generate hoga: "arslan larik" → "arslan_larik"
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      default: null,
     },
 
     password: {
@@ -22,7 +41,6 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      // enum: ["admin", "sales_manager", "sales", "support", "finance_manager", "user"],
       enum: [
         "super_admin",
         "admin",
@@ -32,9 +50,19 @@ const userSchema = new mongoose.Schema(
         "finance_manager",
         "user"
       ],
-
       default: "user",
+    },
 
+    // ✅ OLD USER FLAGS
+    is_old_user: {
+      type: Boolean,
+      default: false,
+    },
+
+    // old user login ke baad yeh true rehega jab tak secure na kare
+    needsAccountSetup: {
+      type: Boolean,
+      default: false,
     },
 
     isVerified: {
@@ -44,32 +72,32 @@ const userSchema = new mongoose.Schema(
 
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
 
     isPaid: {
       type: Boolean,
-      default: false
+      default: false,
     },
 
     isTemporaryPassword: {
       type: Boolean,
-      default: false
+      default: false,
     },
 
     permissions: {
       type: [String],
-      default: []
+      default: [],
     },
 
     avatarColor: {
       type: String,
-      default: null
+      default: null,
     },
 
     lastLogin: {
       type: Date,
-      default: null
+      default: null,
     },
 
     createdBy: {
@@ -85,9 +113,101 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("User", userSchema);
+// const mongoose = require("mongoose");
+
+// const userSchema = new mongoose.Schema(
+//   {
+//     name: {
+//       type: String,
+//       required: true,
+//     },
+
+//     email: {
+//       type: String,
+//       required: true,
+//       unique: true,
+//       lowercase: true,
+//     },
+
+//     password: {
+//       type: String,
+//       required: true,
+//       select: false,
+//     },
+
+//     role: {
+//       type: String,
+//       // enum: ["admin", "sales_manager", "sales", "support", "finance_manager", "user"],
+//       enum: [
+//         "super_admin",
+//         "admin",
+//         "sales_manager",
+//         "sales_rep",
+//         "support",
+//         "finance_manager",
+//         "user"
+//       ],
+
+//       default: "user",
+
+//     },
+
+//     isVerified: {
+//       type: Boolean,
+//       default: false,
+//     },
+
+//     isActive: {
+//       type: Boolean,
+//       default: false,
+//     },
+
+//     isPaid: {
+//       type: Boolean,
+//       default: false
+//     },
+
+//     isTemporaryPassword: {
+//       type: Boolean,
+//       default: false
+//     },
+
+//     permissions: {
+//       type: [String],
+//       default: []
+//     },
+
+//     avatarColor: {
+//       type: String,
+//       default: null
+//     },
+
+//     lastLogin: {
+//       type: Date,
+//       default: null
+//     },
+
+//     createdBy: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//     },
+
+//     verificationToken: String,
+//     resetPasswordToken: String,
+//     resetPasswordExpire: Date,
+//     resetPasswordAttempts: { type: Number, default: 0 },
+//     refreshToken: {
+//       type: String,
+//       default: null,
+//     },
+
+//   },
+//   { timestamps: true }
+// );
+
+// module.exports = mongoose.model("User", userSchema);
