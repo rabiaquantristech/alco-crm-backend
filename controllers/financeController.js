@@ -526,7 +526,6 @@ exports.getMyInvoices = async (req, res) => {
       .sort({ createdAt: -1 });
  
     // Har invoice ke saath payments bhi attach karo
-    const Payment = require("../models/Payment");
     const result = await Promise.all(
       invoices.map(async (inv) => {
         const payments = await Payment.find({
