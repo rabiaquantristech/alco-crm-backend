@@ -24,7 +24,10 @@ const {
   registerForLiveSession,
   // Student — Resources
   getResources,
-  getResourceDownloadUrl
+  getResourceDownloadUrl,
+  getLessonComments,    
+  addLessonComment,     
+
 } = require("../controllers/lmsController");
 
 // ─── Student role check ───────────────────────────────────────
@@ -62,5 +65,8 @@ router.post("/:enrollmentId/live-sessions/:id/register",        protect, isStude
 router.get("/:enrollmentId/resources",                          protect, isStudent, getResources);
 router.get("/:enrollmentId/resources/:id/download",             protect, isStudent, getResourceDownloadUrl);
 
+// Comments
+router.get("/:enrollmentId/lessons/:lessonId/comments", protect, getLessonComments);
+router.post("/:enrollmentId/lessons/:lessonId/comments", protect, addLessonComment);
 
 module.exports = router;

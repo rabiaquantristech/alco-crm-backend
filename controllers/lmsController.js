@@ -4,6 +4,7 @@ const Course        = require("../models/courseModel");
 const Module        = require("../models/moduleModel");
 const Lesson        = require("../models/lessonModel");
 const LessonProgress = require("../models/lessonProgressModel");
+const LessonComment = require("../models/lessonCommentModel");
 const Assignment    = require("../models/assignmentModel");
 const Submission    = require("../models/submissionModel");
 const LiveSession   = require("../models/liveSessionModel");
@@ -22,6 +23,47 @@ async function verifyEnrollment(enrollmentId, userId) {
 // ═══════════════════════════════════════════════════════════════
 // STUDENT — LEARNING DASHBOARD
 // ═══════════════════════════════════════════════════════════════
+
+// GET /api/v1/learn/:enrollmentId/lessons/:lessonId/comments
+exports.getLessonComments = async (req, res) => {
+  try {
+    const enrollment = await verifyEnrollment(req.params.enrollmentId, req.user.id);
+    if (!enrollment) return res.status(403).json({ success: false, message: "Access denied" });
+
+    const comments = await LessonComment.find({ lesson_id: req.params.lessonId })
+      .populate("user_id", "name avatarColor")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: comments });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/v1/learn/:enrollmentId/lessons/:lessonId/comments
+exports.addLessonComment = async (req, res) => {
+  try {
+    const enrollment = await verifyEnrollment(req.params.enrollmentId, req.user.id);
+    if (!enrollment) return res.status(403).json({ success: false, message: "Access denied" });
+
+    const { comment, timestamp_seconds } = req.body;
+    if (!comment?.trim()) return res.status(400).json({ message: "Comment required" });
+
+    const newComment = await LessonComment.create({
+      lesson_id: req.params.lessonId,
+      enrollment_id: enrollment._id,
+      user_id: req.user.id,
+      comment: comment.trim(),
+      timestamp_seconds: timestamp_seconds || 0,
+    });
+
+    const populated = await newComment.populate("user_id", "name avatarColor");
+
+    res.status(201).json({ success: true, data: populated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // GET /api/v1/learn/:enrollmentId
 exports.getLearningDashboard = async (req, res) => {
