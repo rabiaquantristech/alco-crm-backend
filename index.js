@@ -212,6 +212,9 @@ const accessRoute = require("./routes/accessRoute.js");
 const leadRoute = require("./routes/leadRoute.js");
 const programRoute = require("./routes/programRoute.js");
 const auditRoute = require("./routes/auditRoute.js");
+const lmsRouter = require("./routes/lmsRoute.js");
+const instructorRouter = require("./routes/lmsInstructorRoute.js");
+const lmsAdminRoute = require("./routes/lmsAdminRoute.js");
 const blogRoute = require("./routes/blogRoute.js");
 
 const connectDB = require("./config/db.js");
@@ -319,6 +322,14 @@ app.use("/api/v1/leads", leadRoute);
 app.use("/api/v1/programs", programRoute);
 app.use("/api/v1/audit-logs", auditRoute);
 app.use("/api/v1/blogs", blogRoute);
+// Student LMS routes
+app.use("/api/v1/learn", lmsRouter);
+ 
+// Instructor routes
+app.use("/api/v1/instructor", instructorRouter);
+ 
+// Admin LMS content management
+app.use("/api/v1/lms", lmsAdminRoute);
 
 
 // ======================

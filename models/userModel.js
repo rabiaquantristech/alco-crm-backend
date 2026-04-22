@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema(
         "sales_rep",
         "support",
         "finance_manager",
+        "instructor",
         "user"
       ],
       default: "user",
@@ -63,6 +64,10 @@ const userSchema = new mongoose.Schema(
     needsAccountSetup: {
       type: Boolean,
       default: false,
+    },
+    
+    source:{
+      type: String,
     },
 
     isVerified: {
