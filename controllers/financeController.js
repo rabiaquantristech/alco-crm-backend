@@ -514,6 +514,35 @@ exports.getPendingReport = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// GET /api/v1/finance/invoices/my — Student apni invoices dekhe
+exports.getMyInvoices = async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ user: req.user.id })
+      .populate({
+        path: "enrollment",
+        populate: { path: "program", select: "name" },
+      })
+      .sort({ createdAt: -1 });
+ 
+    // Har invoice ke saath payments bhi attach karo
+    const Payment = require("../models/Payment");
+    const result = await Promise.all(
+      invoices.map(async (inv) => {
+        const payments = await Payment.find({
+          invoice: inv._id,
+          status: "approved",
+        }).select("amount method referenceNumber createdAt").sort({ createdAt: -1 });
+ 
+        return { ...inv.toObject(), payments };
+      })
+    );
+ 
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 // const Enrollment = require("../models/enrollmentModel.js");
 
 // exports.addFinanceExtension = async (req, res) => {

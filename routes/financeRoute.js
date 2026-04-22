@@ -15,6 +15,7 @@ const {
   approvePayment,
   rejectPayment,
   updatePayment,
+  getMyInvoices,
   getPendingPayments,
   getOverduePayments,
   getUpcomingDues,
@@ -32,6 +33,7 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 // ─── INVOICE ROUTES ───────────────────────────────────────────
 router.post("/invoices", protect, authorize("finance_manager", "admin", "super_admin"), createInvoice);
 router.get("/invoices", protect, authorize("finance_manager", "admin", "super_admin"), getAllInvoices);
+router.get("/invoices/my", protect, getMyInvoices);
 router.get("/invoices/pending", protect, authorize("finance_manager", "admin", "super_admin"), getPendingPayments);
 router.get("/invoices/overdue", protect, authorize("finance_manager", "admin", "super_admin"), getOverduePayments);
 router.get("/invoices/upcoming-dues", protect, authorize("finance_manager", "admin", "super_admin"), getUpcomingDues);
@@ -54,6 +56,7 @@ router.post("/extension", protect, authorize("finance_manager", "admin", "super_
 router.get("/reports/revenue", protect, authorize("finance_manager", "admin", "super_admin"), getRevenueReport);
 router.get("/reports/monthly", protect, authorize("finance_manager", "admin", "super_admin"), getMonthlyCollections);
 router.get("/reports/pending", protect, authorize("finance_manager", "admin", "super_admin"), getPendingReport);
+
 
 module.exports = router;
 
