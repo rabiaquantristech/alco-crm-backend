@@ -38,6 +38,11 @@ const leadSchema = new mongoose.Schema(
     message: String,
     query: String,
 
+    opportunity_value: {
+      type: Number,
+      default: 0,
+    },
+
     status: {
       type: String,
       enum: ["new", "contacted", "qualified", "converted", "lost"],
@@ -52,7 +57,7 @@ const leadSchema = new mongoose.Schema(
 
     source: {
       type: String,
-      enum: ["utm", "referral", "social", "organic", "enroll"], 
+      enum: ["utm", "referral", "social", "organic", "enroll"],
       default: "enroll"
     },
 
