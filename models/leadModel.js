@@ -33,6 +33,7 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Program",
     },
+
     goals: [String],
     message: String,
     query: String,
@@ -51,7 +52,8 @@ const leadSchema = new mongoose.Schema(
 
     source: {
       type: String,
-      enum: ["facebook", "google", "organic", "referral"],
+      enum: ["utm", "referral", "social", "organic", "direct"], 
+      default: "direct"
     },
 
     assigned_to: {
