@@ -382,9 +382,9 @@ exports.createLeadContact = async (req, res) => {
             const fullName = `${first_name} ${last_name || ""}`.trim();
             // const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
             // const rawPass = phone || username;
+            const rawPass = phone || Math.random().toString(36).slice(-8);
             const hashedPass = await bcrypt.hash(rawPass, 10);
 
-            const rawPass = phone || Math.random().toString(36).slice(-8);
 
             await User.create({
                 name: fullName,
