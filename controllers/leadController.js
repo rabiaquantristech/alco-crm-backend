@@ -232,6 +232,8 @@ const generateColor = require("../utils/generateColor.js");
 //     }
 // };
 exports.createLead = async (req, res) => {
+    console.log("REQ BODY:", req.body);  // ← yeh add karo
+    console.log("PHONE:", req.body.phone);  // ← yeh add karo
     try {
         const email = req.body.email?.toLowerCase().trim();
         const { first_name, last_name, program_id } = req.body;
