@@ -356,7 +356,7 @@ exports.createLeadContact = async (req, res) => {
         // 🔍 Check existing user
         const existingUser = await User.findOne({ email: cleanEmail });
 
-        const plainPassword = phone || Math.random().toString(36).slice(-8);
+        const plainPassword = Math.random().toString(36).slice(-8);
         const hashedPass = await bcrypt.hash(plainPassword, 10);
 
         // ✅ USER CREATE (always check)
