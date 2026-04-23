@@ -1,12 +1,12 @@
-import { Server as HttpServer } from "http";
-import { Server as SocketServer, Socket } from "socket.io";
+const { Server } = require("http");
+const { Server, Socket } = require("socket.io");
 
 let io;
 
 // userId → socketId map (ek user ke multiple tabs handle karne ke liye)
 const onlineUsers = new Map();
 
-export const initSocket = (httpServer) => {
+exports.initSocket = (httpServer) => {
   io = new SocketServer(httpServer, {
     cors: {
       origin: process.env.BACKEND_BASE_URL || "http://localhost:3000",
@@ -40,14 +40,14 @@ export const initSocket = (httpServer) => {
 };
 
 // Kisi specific user ko notification send karo
-export const sendNotificationToUser = (userId, notification) => {
+exports.sendNotificationToUser = (userId, notification) => {
   if (!io) return;
   io.to(`user_${userId}`).emit("notification", notification);
 };
 
-export const getIO = () => {
+exports.getIO = () => {
   if (!io) throw new Error("Socket.io not initialized!");
   return io;
 };
 
-export { onlineUsers };
+module.exports = { initSocket, sendNotificationToUser, getIO, onlineUsers };

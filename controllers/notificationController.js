@@ -1,7 +1,7 @@
-import Notification from "../models/notification.model";
+const Notification = require("../models/notificationModel.js");
 
 // ── GET /api/notifications — user ki sari notifications ──────
-export const getNotifications = async (req, res) => {
+exports.getNotifications = async (req, res) => {
   try {
     const userId = req.user._id; // auth middleware se
     const { page = 1, limit = 20 } = req.query;
@@ -29,7 +29,7 @@ export const getNotifications = async (req, res) => {
 };
 
 // ── PATCH /api/notifications/:id/read — single mark as read ──
-export const markAsRead = async (req, res) => {
+exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
     await Notification.findByIdAndUpdate(id, { is_read: true });
@@ -40,7 +40,7 @@ export const markAsRead = async (req, res) => {
 };
 
 // ── PATCH /api/notifications/read-all — sab mark as read ─────
-export const markAllAsRead = async (req, res) => {
+exports.markAllAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
     await Notification.updateMany({ user_id: userId, is_read: false }, { is_read: true });
@@ -51,7 +51,7 @@ export const markAllAsRead = async (req, res) => {
 };
 
 // ── DELETE /api/notifications/:id — single delete ────────────
-export const deleteNotification = async (req, res) => {
+exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
     await Notification.findByIdAndDelete(id);

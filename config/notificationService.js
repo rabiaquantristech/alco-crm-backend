@@ -1,8 +1,8 @@
-import Notification from "../models/notification.model";
-import { sendNotificationToUser } from "../socket/socket";
+const Notification = require("../models/notificationModel.js");
+const { sendNotificationToUser } = require("../socket/socket");
 
 // ── Notification create karo + socket emit karo ──────────────
-export const createNotification = async (params) => {
+exports.createNotification = async (params) => {
   const notification = await Notification.create(params);
 
   // Populate triggered_by for frontend display
@@ -25,7 +25,7 @@ export const createNotification = async (params) => {
 };
 
 // ── Lead assign hone pe ──────────────────────────────────────
-export const notifyLeadAssigned = async ({
+exports.notifyLeadAssigned = async ({
   userId,
   leadName,
   leadId,
@@ -42,7 +42,7 @@ export const notifyLeadAssigned = async ({
 };
 
 // ── Activity add hone pe ─────────────────────────────────────
-export const notifyActivityAdded = async ({
+exports.notifyActivityAdded = async ({
   userId,
   leadName,
   leadId,
@@ -62,7 +62,7 @@ export const notifyActivityAdded = async ({
 };
 
 // ── Status change hone pe ────────────────────────────────────
-export const notifyStatusChanged = async ({
+exports.notifyStatusChanged = async ({
   userId,
   leadName,
   leadId,
