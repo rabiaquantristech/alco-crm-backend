@@ -350,7 +350,7 @@ exports.createLeadContact = async (req, res) => {
         }
 
         // ── Duplicate check — email se ───────────────────────────
-        const existingLead = await Lead.findOne({ email: email.toLowerCase() });
+        const existingLead = await Lead.findOne({ email });
 
         if (existingLead) {
             // Already exist karta hai → Thank you message bhejo, naya lead mat banao
@@ -377,24 +377,27 @@ exports.createLeadContact = async (req, res) => {
         // ── User already exist karta hai? ────────────────────────
         const existingUser = await User.findOne({ email: email.toLowerCase() });
 
+        const plainPassword = phone || Math.random().toString(36).slice(-8);
+        const hashedPass = await bcrypt.hash(plainPassword, 10);
+        
         if (!existingUser) {
             // Naya user banao — is_old_user: true, password skip hoga
-            const fullName = `${first_name} ${last_name || ""}`.trim();
+            // const fullName = `${first_name} ${last_name || ""}`.trim();
             // const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
             // const rawPass = phone || username;
-            const rawPass = phone || Math.random().toString(36).slice(-8);
-            const hashedPass = await bcrypt.hash(rawPass, 10);
 
 
             await User.create({
-                name: fullName,
+                name: `${first_name} ${last_name || ""}`.trim(),
                 email: email.toLowerCase(),
-                phone: phone || null,
+                phone: req.body.phone || null,  // ← ADD KARO
                 // username,  ← HATA DO
                 password: hashedPass,
                 role: "user",
-                isVerified: false,
+                isVerified: true,
                 isActive: true,
+                avatarColor: generateColor(email),
+                isTemporaryPassword: true,
             })
 
             // await User.create({
@@ -416,11 +419,19 @@ exports.createLeadContact = async (req, res) => {
             await sendEmail({
                 to: email,
                 subject: "Thank you for contacting us! 🎉",
-                templateName: "contact-thank-you",
+                templateName: "send-user-credentials",
+                // replacements: {
+                //     UserName: first_name,
+                //     YourCompanyName: "Al-and-co",
+                //     Query: query || "",
+                // },
                 replacements: {
-                    UserName: first_name,
+                    UserName: `${first_name} ${last_name || ""}`,
+                    UserEmail: email,
+                    UserPassword: plainPassword,
+                    SupportEmail: "alco@support.com",
                     YourCompanyName: "Al-and-co",
-                    Query: query || "",
+                    LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
                 },
             });
         } catch (emailErr) {
