@@ -10,28 +10,43 @@ const userSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      // ✅ old users ka email nahi hoga — required hataya, sparse index lagaya
+      required: true,
       unique: true,
-      sparse: true, // null values unique constraint se exempt hongi
       lowercase: true,
-      default: null,
+      trim: true,
     },
 
     phone: {
       type: String,
-      unique: true,
-      sparse: true, // sirf old users ke paas hoga
       default: null,
+       index: true, 
     },
 
+    // email: {
+    //   type: String,
+    //   // ✅ old users ka email nahi hoga — required hataya, sparse index lagaya
+    //   unique: true,
+    //   sparse: true, // null values unique constraint se exempt hongi
+    //   lowercase: true,
+    //   default: null,
+    // },
+
+
+    // phone: {
+    //   type: String,
+    //   unique: true,
+    //   sparse: true, // sirf old users ke paas hoga
+    //   default: null,
+    // },
+
     // ✅ name se generate hoga: "arslan larik" → "arslan_larik"
-    username: {
-      type: String,
-      unique: true,
-      sparse: true,
-      lowercase: true,
-      default: null,
-    },
+    // username: {
+    //   type: String,
+    //   unique: true,
+    //   sparse: true,
+    //   lowercase: true,
+    //   default: null,
+    // },
 
     password: {
       type: String,
@@ -55,17 +70,17 @@ const userSchema = new mongoose.Schema(
     },
 
     // ✅ OLD USER FLAGS
-    is_old_user: {
-      type: Boolean,
-      default: false,
-    },
+    // is_old_user: {
+    //   type: Boolean,
+    //   default: false,
+    // },
 
     // old user login ke baad yeh true rehega jab tak secure na kare
-    needsAccountSetup: {
-      type: Boolean,
-      default: false,
-    },
-    
+    // needsAccountSetup: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+
     source: {
       type: String,
       enum: ["utm", "referral", "social", "organic", "enroll", "contact", "other"],
