@@ -380,22 +380,35 @@ exports.createLeadContact = async (req, res) => {
         if (!existingUser) {
             // Naya user banao — is_old_user: true, password skip hoga
             const fullName = `${first_name} ${last_name || ""}`.trim();
-            const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-            const rawPass = phone || username;
+            // const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+            // const rawPass = phone || username;
             const hashedPass = await bcrypt.hash(rawPass, 10);
+
+            const rawPass = phone || Math.random().toString(36).slice(-8);
 
             await User.create({
                 name: fullName,
                 email: email.toLowerCase(),
                 phone: phone || null,
-                username,
+                // username,  ← HATA DO
                 password: hashedPass,
                 role: "user",
-                is_old_user: true,
-                needsAccountSetup: true,
                 isVerified: false,
                 isActive: true,
-            });
+            })
+
+            // await User.create({
+            //     name: fullName,
+            //     email: email.toLowerCase(),
+            //     phone: phone || null,
+            //     username,
+            //     password: hashedPass,
+            //     role: "user",
+            //     is_old_user: true,
+            //     needsAccountSetup: true,
+            //     isVerified: false,
+            //     isActive: true,
+            // });
         }
 
         // ── Thank you email bhejo ─────────────────────────────────

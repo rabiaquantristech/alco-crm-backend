@@ -16,10 +16,15 @@ const leadSchema = new mongoose.Schema(
 
     // phone: String,
 
+    // phone: {
+    //   type: String,
+    //   unique: true,
+    //   sparse: true,  
+    //   default: null,
+    // },
+
     phone: {
       type: String,
-      unique: true,
-      sparse: true,  
       default: null,
     },
 
