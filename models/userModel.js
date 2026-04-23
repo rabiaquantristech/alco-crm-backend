@@ -66,8 +66,10 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     
-    source:{
+    source: {
       type: String,
+      enum: ["utm", "referral", "social", "organic", "enroll", "contact", "other"],
+      default: "enroll"
     },
 
     isVerified: {
