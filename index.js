@@ -216,6 +216,7 @@ const lmsRouter = require("./routes/lmsRoute.js");
 const instructorRouter = require("./routes/lmsInstructorRoute.js");
 const lmsAdminRoute = require("./routes/lmsAdminRoute.js");
 const blogRoute = require("./routes/blogRoute.js");
+const notificationRoute = require("./routes/notificationRoute.js");
 
 const connectDB = require("./config/db.js");
 
@@ -330,6 +331,8 @@ app.use("/api/v1/instructor", instructorRouter);
  
 // Admin LMS content management
 app.use("/api/v1/lms", lmsAdminRoute);
+
+app.use("/api/v1/notifications", notificationRoute);
 
 
 // ======================
