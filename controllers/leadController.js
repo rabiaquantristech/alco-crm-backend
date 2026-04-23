@@ -278,13 +278,13 @@ exports.createLead = async (req, res) => {
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
         const newUser = await User.create({
-            name:                `${first_name} ${last_name || ""}`.trim(),
+            name: `${first_name} ${last_name || ""}`.trim(),
             email,
-            password:            hashedPassword,
-            role:                "user",
-            isVerified:          true,
-            isActive:            true,
-            avatarColor:         generateColor(email),
+            password: hashedPassword,
+            role: "user",
+            isVerified: true,
+            isActive: true,
+            avatarColor: generateColor(email),
             isTemporaryPassword: true,
         });
 
@@ -297,33 +297,34 @@ exports.createLead = async (req, res) => {
 
         // ── Step 4: Credentials email bhejo ──────────────────
         await sendEmailDynamic({
-            to:           email,
-            subject:      "Your Account Credentials 🔑",
+            to: email,
+            subject: "Your Account Credentials 🔑",
             templateName: "send-user-credentials",
             replacements: {
-                UserName:       `${first_name} ${last_name || ""}`,
-                UserEmail:      email,
-                UserPassword:   plainPassword,
-                SupportEmail:   "alco@support.com",
-                YourCompanyName:"Al-and-co",
-                LoginLink:      `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+                UserName: `${first_name} ${last_name || ""}`,
+                UserEmail: email,
+                UserPassword: plainPassword,
+                SupportEmail: "alco@support.com",
+                YourCompanyName: "Al-and-co",
+                LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
             },
         });
 
         return res.status(201).json({
-            success:   true,
+            success: true,
             duplicate: false,
-            message:   "Thank you for applying! Check your email for login details. 😊",
-            data:      lead,
+            message: "Thank you for applying! Check your email for login details. 😊",
+            data: lead,
         });
 
     } catch (error) {
-        // Koi aur duplicate issue
+        console.log("FULL ERROR:", error); // ← yeh add karo temporarily
         if (error.code === 11000) {
+            console.log("DUPLICATE KEY:", error.keyValue); // ← yeh bhi
             return res.status(200).json({
-                success:   true,
+                success: true,
                 duplicate: true,
-                message:   "Thank you! We already have your details. 😊",
+                message: "Thank you! We already have your details. 😊",
             });
         }
         res.status(500).json({ message: error.message });
