@@ -395,6 +395,20 @@ exports.createLeadContact = async (req, res) => {
             quality: "cold",
         });
 
+        await sendEmailDynamic({
+            to: email,
+            subject: "Your Account Credentials 🔑",
+            templateName: "send-user-credentials",
+            replacements: {
+                UserName: `${first_name} ${last_name || ""}`,
+                UserEmail: email,
+                UserPassword: plainPassword,
+                SupportEmail: "alco@support.com",
+                YourCompanyName: "Al-and-co",
+                LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+            },
+        });
+
         return res.status(201).json({
             success: true,
             duplicate: false,
