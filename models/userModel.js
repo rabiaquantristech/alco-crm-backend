@@ -1,4 +1,4 @@
-// models/userModel.js
+// models/userModel.js — UPDATED
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -8,41 +8,30 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    // email: {
-    //   type: String,
-    //   unique: true,
-    //   sparse: true,
-    //   lowercase: true,
-    //   default: null,
-    // },
-
-    // phone: {
-    //   type: String,
-    //   unique: true,
-    //   sparse: true,
-    //   default: null,
-    // },
     email: {
       type: String,
-      required: true,
+      // ✅ old users ka email nahi hoga — required hataya, sparse index lagaya
       unique: true,
+      sparse: true, // null values unique constraint se exempt hongi
       lowercase: true,
+      default: null,
     },
 
     phone: {
       type: String,
       unique: true,
-      sparse: true,  // phone optional hai
+      sparse: true, // sirf old users ke paas hoga
       default: null,
     },
 
-    // username: {
-    //   type: String,
-    //   unique: true,
-    //   sparse: true,
-    //   lowercase: true,
-    //   default: null,
-    // },
+    // ✅ name se generate hoga: "arslan larik" → "arslan_larik"
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      default: null,
+    },
 
     password: {
       type: String,
@@ -60,14 +49,25 @@ const userSchema = new mongoose.Schema(
         "support",
         "finance_manager",
         "instructor",
-        "user",
+        "user"
       ],
       default: "user",
     },
 
-    source: {
+    // ✅ OLD USER FLAGS
+    is_old_user: {
+      type: Boolean,
+      default: false,
+    },
+
+    // old user login ke baad yeh true rehega jab tak secure na kare
+    needsAccountSetup: {
+      type: Boolean,
+      default: false,
+    },
+    
+    source:{
       type: String,
-      default: null,
     },
 
     isVerified: {
@@ -89,17 +89,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-
-    // ✅ Old user flags — migration ke liye
-    // is_old_user: {
-    //   type: Boolean,
-    //   default: false,
-    // },
-
-    // needsAccountSetup: {
-    //   type: Boolean,
-    //   default: false,
-    // },
 
     permissions: {
       type: [String],
