@@ -14,12 +14,14 @@ const leadSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    phone: {
-      type: String,
-      unique: true,
-      sparse: true,  // ← yeh add karo — null values exempt hongi
-      default: null,
-    },
+    phone: String,
+
+    // phone: {
+    //   type: String,
+    //   unique: true,
+    //   sparse: true,  // ← yeh add karo — null values exempt hongi
+    //   default: null,
+    // },
 
     // ✅ NEW FIELDS
     nationality: {
