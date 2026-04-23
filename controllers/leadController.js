@@ -245,14 +245,16 @@ exports.createLead = async (req, res) => {
         }
 
         // ── Step 1: User check ────────────────────────────────
-        const existingUser = await User.findOne({ email });
+        // ── Step 1: User check ────────────────────────────────
+        const existingUser = await User.findOne({
+            email: email  // already lowercase trim ho chuka hai upar
+        });
 
         if (existingUser) {
-            // User exist karta hai — same program lead check karo
+            // Same program check
             const existingLead = await Lead.findOne({ email, program_id });
 
             if (existingLead) {
-                // Same program already apply kiya — thank you message
                 return res.status(200).json({
                     success: true,
                     duplicate: true,
@@ -260,7 +262,7 @@ exports.createLead = async (req, res) => {
                 });
             }
 
-            // User hai, same program nahi — sirf lead banao
+            // ✅ Alag program — sirf lead banao
             const lead = await Lead.create({
                 ...req.body,
                 email,
@@ -282,6 +284,7 @@ exports.createLead = async (req, res) => {
         const newUser = await User.create({
             name: `${first_name} ${last_name || ""}`.trim(),
             email,
+            phone: req.body.phone || null,  // ← ADD KARO
             password: hashedPassword,
             role: "user",
             isVerified: true,
