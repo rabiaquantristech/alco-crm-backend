@@ -341,7 +341,6 @@ exports.createLeadContact = async (req, res) => {
     try {
         const { first_name, last_name, email, phone, query } = req.body;
 
-        // ── Validation ────────────────────────────────────────────
         if (!first_name || !email) {
             return res.status(400).json({
                 success: false,
@@ -349,100 +348,57 @@ exports.createLeadContact = async (req, res) => {
             });
         }
 
-        // ── Duplicate check — email se ───────────────────────────
-        const existingLead = await Lead.findOne({ email });
+        const cleanEmail = email.toLowerCase().trim();
 
-        if (existingLead) {
-            // Already exist karta hai → Thank you message bhejo, naya lead mat banao
-            // Optional: email bhi bhej sakte ho
-            return res.status(200).json({
-                success: true,
-                duplicate: true,
-                message: "Thank you for reaching out! We already have your details and will contact you soon. 😊",
-            });
-        }
+        // 🔍 Check existing lead
+        const existingLead = await Lead.findOne({ email: cleanEmail });
 
-        // ── New Lead create karo ──────────────────────────────────
-        const lead = await Lead.create({
-            first_name: first_name.trim(),
-            last_name: (last_name || "").trim(),
-            email: email.toLowerCase().trim(),
-            phone: phone || null,
-            query: query || null,
-            source: "contact",       // contact form se aaya
-            status: "new",
-            quality: "cold",          // default cold, sales rep baad mein update karega
-        });
-
-        // ── User already exist karta hai? ────────────────────────
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        // 🔍 Check existing user
+        const existingUser = await User.findOne({ email: cleanEmail });
 
         const plainPassword = phone || Math.random().toString(36).slice(-8);
         const hashedPass = await bcrypt.hash(plainPassword, 10);
-        
+
+        // ✅ USER CREATE (always check)
         if (!existingUser) {
-            // Naya user banao — is_old_user: true, password skip hoga
-            // const fullName = `${first_name} ${last_name || ""}`.trim();
-            // const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-            // const rawPass = phone || username;
-
-
             await User.create({
                 name: `${first_name} ${last_name || ""}`.trim(),
-                email: email.toLowerCase(),
-                phone: req.body.phone || null,  // ← ADD KARO
-                // username,  ← HATA DO
+                email: cleanEmail,
+                phone: phone || null,
                 password: hashedPass,
                 role: "user",
                 isVerified: true,
                 isActive: true,
-                avatarColor: generateColor(email),
+                avatarColor: generateColor(cleanEmail),
                 isTemporaryPassword: true,
-            })
-
-            // await User.create({
-            //     name: fullName,
-            //     email: email.toLowerCase(),
-            //     phone: phone || null,
-            //     username,
-            //     password: hashedPass,
-            //     role: "user",
-            //     is_old_user: true,
-            //     needsAccountSetup: true,
-            //     isVerified: false,
-            //     isActive: true,
-            // });
-        }
-
-        // ── Thank you email bhejo ─────────────────────────────────
-        try {
-            await sendEmail({
-                to: email,
-                subject: "Thank you for contacting us! 🎉",
-                templateName: "send-user-credentials",
-                // replacements: {
-                //     UserName: first_name,
-                //     YourCompanyName: "Al-and-co",
-                //     Query: query || "",
-                // },
-                replacements: {
-                    UserName: `${first_name} ${last_name || ""}`,
-                    UserEmail: email,
-                    UserPassword: plainPassword,
-                    SupportEmail: "alco@support.com",
-                    YourCompanyName: "Al-and-co",
-                    LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
-                },
             });
-        } catch (emailErr) {
-            // Email fail ho toh bhi lead save rehni chahiye
-            console.error("Thank you email failed:", emailErr.message);
         }
 
-        res.status(201).json({
+        // ❌ Lead already exist → sirf response do (but user ban chuka hoga)
+        if (existingLead) {
+            return res.status(200).json({
+                success: true,
+                duplicate: true,
+                message: "Thank you! We already have your details 😊",
+            });
+        }
+
+        // ✅ New Lead create
+        const lead = await Lead.create({
+            first_name: first_name.trim(),
+            last_name: (last_name || "").trim(),
+            email: cleanEmail,
+            phone: phone || null,
+            query: query || null,
+            source: "contact",
+            status: "new",
+            quality: "cold",
+        });
+
+        return res.status(201).json({
             success: true,
             duplicate: false,
-            message: "Thank you for reaching out! We will contact you soon. 😊",
+            message: "Thank you! We will contact you soon 😊",
             data: { lead_id: lead._id },
         });
 
