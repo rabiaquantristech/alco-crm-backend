@@ -140,6 +140,97 @@ const generateColor = require("../utils/generateColor.js");
 //         res.status(500).json({ message: error.message });
 //     }
 // };
+// exports.createLead = async (req, res) => {
+//     try {
+//         const email = req.body.email?.toLowerCase().trim();
+//         const { first_name, last_name, program_id } = req.body;
+
+//         if (!email || !first_name || !program_id) {
+//             return res.status(400).json({
+//                 message: "Email, first name and program are required",
+//             });
+//         }
+
+//         // 🔥 Duplicate check
+//         const existingLead = await Lead.findOne({ email, program_id });
+
+//         if (existingLead) {
+//             // Silent success — no error, no new lead, no status change
+//             return res.status(200).json({
+//                 success: true,
+//                 message: "Thank you for applying! We'll be in touch soon.",
+//             });
+//         }
+
+//         // 🔥 Check user
+//         const existingUser = await User.findOne({ email });
+
+//         let user = existingUser;
+//         let plainPassword = null;
+
+//         if (!existingUser) {
+//             plainPassword = Math.random().toString(36).slice(-8);
+//             const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+//             user = await User.create({
+//                 name: `${first_name} ${last_name || ""}`.trim(),
+//                 email,
+//                 password: hashedPassword,
+//                 role: "user",
+//                 isVerified: true,
+//                 isActive: true,
+//                 isPlayable: false,
+//                 avatarColor: generateColor(email),
+//                 isTemporaryPassword: true,
+//             });
+//         }
+
+//         // 🔥 Create lead
+//         const lead = await Lead.create({
+//             ...req.body,
+//             email,
+//             created_by: req.user?.id || null,
+//         });
+
+//         // 🔥 Send email
+//         if (!existingUser) {
+//             await sendEmailDynamic({
+//                 to: email,
+//                 subject: "Your Account Credentials 🔑",
+//                 templateName: "send-user-credentials",
+//                 replacements: {
+//                     UserName: `${first_name} ${last_name || ""}`,
+//                     UserEmail: email,
+//                     UserPassword: plainPassword,
+//                     SupportEmail: "alco@support.com",
+//                     YourCompanyName: "Al-and-co",
+//                     LoginLink:
+//                         "https://alco-crm-frontend.vercel.app/login?email=" +
+//                         email +
+//                         "&password=" +
+//                         plainPassword,
+//                 },
+//             });
+//         }
+
+//         res.status(201).json({
+//             success: true,
+//             message: existingUser
+//                 ? "Lead created (user already exists)"
+//                 : "Lead + User created successfully",
+//             data: lead,
+//         });
+
+//     } catch (error) {
+//         if (error.code === 11000) {
+//             return res.status(400).json({
+//                 message: "You have already applied for this program",
+//             });
+//         }
+
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 exports.createLead = async (req, res) => {
     try {
         const email = req.body.email?.toLowerCase().trim();
@@ -151,83 +242,90 @@ exports.createLead = async (req, res) => {
             });
         }
 
-        // 🔥 Duplicate check
-        const existingLead = await Lead.findOne({ email, program_id });
-
-        if (existingLead) {
-            // Silent success — no error, no new lead, no status change
-            return res.status(200).json({
-                success: true,
-                message: "Thank you for applying! We'll be in touch soon.",
-            });
-        }
-
-        // 🔥 Check user
+        // ── Step 1: User check ────────────────────────────────
         const existingUser = await User.findOne({ email });
 
-        let user = existingUser;
-        let plainPassword = null;
+        if (existingUser) {
+            // User exist karta hai — same program lead check karo
+            const existingLead = await Lead.findOne({ email, program_id });
 
-        if (!existingUser) {
-            plainPassword = Math.random().toString(36).slice(-8);
-            const hashedPassword = await bcrypt.hash(plainPassword, 10);
+            if (existingLead) {
+                // Same program already apply kiya — thank you message
+                return res.status(200).json({
+                    success: true,
+                    duplicate: true,
+                    message: "Thank you for your interest! We already have your application and will contact you soon. 😊",
+                });
+            }
 
-            user = await User.create({
-                name: `${first_name} ${last_name || ""}`.trim(),
+            // User hai, same program nahi — sirf lead banao
+            const lead = await Lead.create({
+                ...req.body,
                 email,
-                password: hashedPassword,
-                role: "user",
-                isVerified: true,
-                isActive: true,
-                isPlayable: false,
-                avatarColor: generateColor(email),
-                isTemporaryPassword: true,
+                created_by: req.user?.id || null,
+            });
+
+            return res.status(201).json({
+                success: true,
+                duplicate: false,
+                message: "Thank you for applying! We'll be in touch soon. 😊",
+                data: lead,
             });
         }
 
-        // 🔥 Create lead
+        // ── Step 2: Naya user banao ───────────────────────────
+        const plainPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+        const newUser = await User.create({
+            name:                `${first_name} ${last_name || ""}`.trim(),
+            email,
+            password:            hashedPassword,
+            role:                "user",
+            isVerified:          true,
+            isActive:            true,
+            avatarColor:         generateColor(email),
+            isTemporaryPassword: true,
+        });
+
+        // ── Step 3: Lead banao ────────────────────────────────
         const lead = await Lead.create({
             ...req.body,
             email,
             created_by: req.user?.id || null,
         });
 
-        // 🔥 Send email
-        if (!existingUser) {
-            await sendEmailDynamic({
-                to: email,
-                subject: "Your Account Credentials 🔑",
-                templateName: "send-user-credentials",
-                replacements: {
-                    UserName: `${first_name} ${last_name || ""}`,
-                    UserEmail: email,
-                    UserPassword: plainPassword,
-                    SupportEmail: "alco@support.com",
-                    YourCompanyName: "Al-and-co",
-                    LoginLink:
-                        "https://alco-crm-frontend.vercel.app/login?email=" +
-                        email +
-                        "&password=" +
-                        plainPassword,
-                },
-            });
-        }
+        // ── Step 4: Credentials email bhejo ──────────────────
+        await sendEmailDynamic({
+            to:           email,
+            subject:      "Your Account Credentials 🔑",
+            templateName: "send-user-credentials",
+            replacements: {
+                UserName:       `${first_name} ${last_name || ""}`,
+                UserEmail:      email,
+                UserPassword:   plainPassword,
+                SupportEmail:   "alco@support.com",
+                YourCompanyName:"Al-and-co",
+                LoginLink:      `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+            },
+        });
 
-        res.status(201).json({
-            success: true,
-            message: existingUser
-                ? "Lead created (user already exists)"
-                : "Lead + User created successfully",
-            data: lead,
+        return res.status(201).json({
+            success:   true,
+            duplicate: false,
+            message:   "Thank you for applying! Check your email for login details. 😊",
+            data:      lead,
         });
 
     } catch (error) {
+        // Koi aur duplicate issue
         if (error.code === 11000) {
-            return res.status(400).json({
-                message: "You have already applied for this program",
+            return res.status(200).json({
+                success:   true,
+                duplicate: true,
+                message:   "Thank you! We already have your details. 😊",
             });
         }
-
         res.status(500).json({ message: error.message });
     }
 };
