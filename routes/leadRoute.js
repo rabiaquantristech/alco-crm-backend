@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
   createLead,
+  createLeadContact,
   getLeads,
   getLeadById,
   updateLead,
@@ -20,6 +21,8 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 
 // ✅ Public 
 router.post("/", createLead);
+
+router.post("/contact", createLeadContact);
 
 // ✅ Stats rout
 router.get("/stats", protect, authorize("super_admin", "admin", "sales_manager"), getLeadsStats);

@@ -155,8 +155,10 @@ exports.createLead = async (req, res) => {
         const existingLead = await Lead.findOne({ email, program_id });
 
         if (existingLead) {
-            return res.status(400).json({
-                message: "You have already applied for this program",
+            // Silent success — no error, no new lead, no status change
+            return res.status(200).json({
+                success: true,
+                message: "Thank you for applying! We'll be in touch soon.",
             });
         }
 
@@ -227,6 +229,97 @@ exports.createLead = async (req, res) => {
         }
 
         res.status(500).json({ message: error.message });
+    }
+};
+
+// ─── Contact Form → Lead (website se aata hai) ────────────────
+exports.createLeadContact = async (req, res) => {
+    try {
+        const { first_name, last_name, email, phone, query } = req.body;
+
+        // ── Validation ────────────────────────────────────────────
+        if (!first_name || !email) {
+            return res.status(400).json({
+                success: false,
+                message: "First name and email are required",
+            });
+        }
+
+        // ── Duplicate check — email se ───────────────────────────
+        const existingLead = await Lead.findOne({ email: email.toLowerCase() });
+
+        if (existingLead) {
+            // Already exist karta hai → Thank you message bhejo, naya lead mat banao
+            // Optional: email bhi bhej sakte ho
+            return res.status(200).json({
+                success: true,
+                duplicate: true,
+                message: "Thank you for reaching out! We already have your details and will contact you soon. 😊",
+            });
+        }
+
+        // ── New Lead create karo ──────────────────────────────────
+        const lead = await Lead.create({
+            first_name: first_name.trim(),
+            last_name: (last_name || "").trim(),
+            email: email.toLowerCase().trim(),
+            phone: phone || null,
+            query: query || null,
+            source: "contact",       // contact form se aaya
+            status: "new",
+            quality: "cold",          // default cold, sales rep baad mein update karega
+        });
+
+        // ── User already exist karta hai? ────────────────────────
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+
+        if (!existingUser) {
+            // Naya user banao — is_old_user: true, password skip hoga
+            const fullName = `${first_name} ${last_name || ""}`.trim();
+            const username = fullName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+            const rawPass = phone || username;
+            const hashedPass = await bcrypt.hash(rawPass, 10);
+
+            await User.create({
+                name: fullName,
+                email: email.toLowerCase(),
+                phone: phone || null,
+                username,
+                password: hashedPass,
+                role: "user",
+                is_old_user: true,
+                needsAccountSetup: true,
+                isVerified: false,
+                isActive: true,
+            });
+        }
+
+        // ── Thank you email bhejo ─────────────────────────────────
+        try {
+            await sendEmail({
+                to: email,
+                subject: "Thank you for contacting us! 🎉",
+                templateName: "contact-thank-you",
+                replacements: {
+                    UserName: first_name,
+                    YourCompanyName: "Al-and-co",
+                    Query: query || "",
+                },
+            });
+        } catch (emailErr) {
+            // Email fail ho toh bhi lead save rehni chahiye
+            console.error("Thank you email failed:", emailErr.message);
+        }
+
+        res.status(201).json({
+            success: true,
+            duplicate: false,
+            message: "Thank you for reaching out! We will contact you soon. 😊",
+            data: { lead_id: lead._id },
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
