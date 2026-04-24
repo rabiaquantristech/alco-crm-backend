@@ -112,10 +112,23 @@ const leadSchema = new mongoose.Schema(
       ref: "User",
     },
 
-    email_subject: String,
-    meeting_link: String,
-    meeting_datetime: Date,
-    meeting_location: String,
+    // ✅ Sahi — activities array ke andar hona chahiye
+    activities: [
+      {
+        activity_type: String,
+        title: String,
+        description: String,
+        call_duration_minutes: Number,
+        call_outcome: String,
+        // ↓ Yeh naye fields yahan add karo
+        email_subject: String,
+        meeting_link: String,
+        meeting_datetime: Date,
+        meeting_location: String,
+        created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
 
     lost_reason: String,
     lost_notes: String,

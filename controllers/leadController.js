@@ -743,7 +743,7 @@ exports.updateLead = async (req, res) => {
                 await sendEmailDynamic({
                     to: user.email,
                     subject: "Your Request Has Been Updated 🔄",
-                    templateName: "lead-status-update", 
+                    templateName: "lead-status-update",
                     replacements: {
                         UserName: user.name || updated.first_name,
                         NewStatus: req.body.status,
@@ -911,6 +911,25 @@ exports.getActivities = async (req, res) => {
 };
 
 // ADD ACTIVITY
+// exports.addActivity = async (req, res) => {
+//     try {
+//         const lead = await Lead.findById(req.params.id);
+//         if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+//         lead.activities.push({
+//             ...req.body,
+//             created_by: req.user.id,
+//         });
+
+//         await lead.save();
+
+//         res.status(201).json({ success: true, data: lead.activities });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
+// ADD ACTIVITY
 exports.addActivity = async (req, res) => {
     try {
         const lead = await Lead.findById(req.params.id);
@@ -922,6 +941,90 @@ exports.addActivity = async (req, res) => {
         });
 
         await lead.save();
+
+        // ── Notify + Email user (agar lead ka user_id hai) ────────
+        if (lead.user_id) {
+            const {
+                activity_type,
+                title,
+                description,
+                call_duration_minutes,
+                call_outcome,
+                email_subject,
+                meeting_link,
+                meeting_datetime,
+                meeting_location,
+            } = req.body;
+
+            // 1. In-app notification
+            await notifyActivityAdded({
+                userId: lead.user_id.toString(),
+                leadName: `${lead.first_name} ${lead.last_name}`,
+                leadId: lead._id.toString(),
+                activityId: lead.activities[lead.activities.length - 1]._id.toString(),
+                activityType: activity_type,
+                addedBy: req.user?._id?.toString(),
+            });
+
+            // 2. Email
+            const user = await User.findById(lead.user_id).select("email name");
+            if (user?.email) {
+
+                // ── Activity type badge colors ──────────────────────
+                const badgeStyles = {
+                    call: { bg: "#DCFCE7", color: "#166534", icon: "📞" },
+                    email: { bg: "#DBEAFE", color: "#1e40af", icon: "✉️" },
+                    meeting: { bg: "#EDE9FE", color: "#5b21b6", icon: "📅" },
+                    note: { bg: "#FEF9C3", color: "#854d0e", icon: "📝" },
+                };
+                const badge = badgeStyles[activity_type] || { bg: "#F3F4F6", color: "#374151", icon: "🔔" };
+
+                // ── Conditional rows builder ────────────────────────
+                const makeRow = (label, value) =>
+                    value
+                        ? `<tr style="border-bottom:1px solid #e2e8f0;">
+                <td width="35%" style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">${label}</td>
+                <td style="padding:12px 16px; font-size:14px; color:#1a202c;">${value}</td>
+               </tr>`
+                        : "";
+
+                const makeLinkRow = (label, url) =>
+                    url
+                        ? `<tr style="border-bottom:1px solid #e2e8f0;">
+                <td width="35%" style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">${label}</td>
+                <td style="padding:12px 16px; font-size:14px;">
+                  <a href="${url}" style="color:#185FA5; text-decoration:none;">${url}</a>
+                </td>
+               </tr>`
+                        : "";
+
+                await sendEmailDynamic({
+                    to: user.email,
+                    subject: `New ${activity_type} logged on your request`,
+                    templateName: "activityAdded",
+                    replacements: {
+                        UserName: user.name || lead.first_name,
+                        YourCompanyName: "Al-and-co",
+                        SupportEmail: "alco@support.com",
+                        ActivityType: activity_type,
+                        ActivityIcon: badge.icon,
+                        ActivityBadgeBg: badge.bg,
+                        ActivityBadgeColor: badge.color,
+                        ActivityTitle: title || "—",
+                        LoggedBy: req.user?.name || "Team",
+
+                        // Conditional rows
+                        DescriptionRow: makeRow("Description", description),
+                        CallDurationRow: makeRow("Call Duration", call_duration_minutes ? `${call_duration_minutes} mins` : ""),
+                        CallOutcomeRow: makeRow("Call Outcome", call_outcome),
+                        EmailSubjectRow: makeRow("Email Subject", email_subject),
+                        MeetingLinkRow: makeLinkRow("Meeting Link", meeting_link),
+                        MeetingDateRow: makeRow("Date & Time", meeting_datetime ? new Date(meeting_datetime).toLocaleString() : ""),
+                        MeetingLocationRow: makeRow("Location", meeting_location),
+                    },
+                });
+            }
+        }
 
         res.status(201).json({ success: true, data: lead.activities });
     } catch (error) {
