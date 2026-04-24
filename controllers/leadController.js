@@ -493,18 +493,47 @@ exports.getLeadById = async (req, res) => {
 };
 
 // UPDATE LEAD
+// withpout notification update
+// exports.updateLead = async (req, res) => {
+//     try {
+//         const lead = await Lead.findByIdAndUpdate(
+//             req.params.id,
+//             req.body,
+//             { new: true }
+//         );
+
+//         res.status(200).json({
+//             success: true,
+//             data: lead,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 exports.updateLead = async (req, res) => {
     try {
-        const lead = await Lead.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
+        const { id } = req.params;
+        const oldLead = await Lead.findById(id);
+        const updated = await Lead.findByIdAndUpdate(id, req.body, { new: true });
 
-        res.status(200).json({
-            success: true,
-            data: lead,
-        });
+        if (!updated) return res.status(404).json({ message: "Lead not found" });
+
+        // ✅ Agar status change hua aur lead ka user hai → notify
+        if (
+            req.body.status &&
+            oldLead?.status !== req.body.status &&
+            updated.user_id
+        ) {
+            await notifyStatusChanged({
+                userId: updated.user_id.toString(),
+                leadName: `${updated.first_name} ${updated.last_name}`,
+                leadId: updated._id.toString(),
+                newStatus: req.body.status,
+                changedBy: req.user._id.toString(),
+            });
+        }
+
+        res.json({ success: true, data: updated });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

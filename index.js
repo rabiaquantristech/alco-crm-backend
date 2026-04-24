@@ -196,6 +196,8 @@
 // module.exports = app;
 require("dotenv").config();
 const express = require("express");
+const { createServer } = require("http");
+const { initSocket } = require("./config/socket.js");
 const cors = require("cors");
 const session = require("express-session");
 require("./jobs/payment/paymentCron.js");
@@ -221,6 +223,10 @@ const notificationRoute = require("./routes/notificationRoute.js");
 const connectDB = require("./config/db.js");
 
 const app = express();
+const httpServer = createServer(app); // ← express ko http server mein wrap karo
+
+// ✅ Socket.io init — httpServer pe, app pe nahi
+initSocket(httpServer);
 
 
 // ======================
@@ -325,10 +331,10 @@ app.use("/api/v1/audit-logs", auditRoute);
 app.use("/api/v1/blogs", blogRoute);
 // Student LMS routes
 app.use("/api/v1/learn", lmsRouter);
- 
+
 // Instructor routes
 app.use("/api/v1/instructor", instructorRouter);
- 
+
 // Admin LMS content management
 app.use("/api/v1/lms", lmsAdminRoute);
 
