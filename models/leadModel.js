@@ -110,6 +110,11 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    
+    email_subject: String,
+    meeting_link: String,
+    meeting_datetime: Date,
+    meeting_location: String,
 
     lost_reason: String,
     lost_notes: String,
