@@ -57,8 +57,8 @@ const notifyActivityAdded = ({ userId, leadName, leadId, activityId, activityTyp
   return createNotification({
     user_id: userId,
     type: "activity_added",
-    title: "New Activity on Your Lead",
-    message: `A ${activityType} was logged for your lead "${leadName}".`,
+    title: "New Activity on Your Request",
+    message: `A ${activityType} was logged for your request "${leadName}".`,
     lead_id: leadId,
     activity_id: activityId,
     triggered_by: addedBy,
@@ -70,8 +70,8 @@ const notifyStatusChanged = ({ userId, leadName, leadId, newStatus, changedBy })
   return createNotification({
     user_id: userId,
     type: "status_changed",
-    title: "Lead Status Updated",
-    message: `Your lead "${leadName}" status changed to "${newStatus}".`,
+    title: "Request Status Updated",
+    message: `Your request "${leadName}" status changed to "${newStatus}".`,
     lead_id: leadId,
     triggered_by: changedBy,
   });
