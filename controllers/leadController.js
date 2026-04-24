@@ -5,6 +5,7 @@ const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
 // const emailTemplate = require("../template/send-user-credentials.js");
 const User = require("../models/userModel.js");
 const generateColor = require("../utils/generateColor.js");
+const { notifyStatusChanged } = require("../config/notificationService.js");
 // const sendEmail = require("../utils/sendEmail.js");
 
 // CREATE LEAD (public or admin)
