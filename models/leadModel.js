@@ -44,6 +44,7 @@ const leadSchema = new mongoose.Schema(
     program_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Program",
+      default: null,
     },
 
     user_id: {
@@ -110,7 +111,7 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    
+
     email_subject: String,
     meeting_link: String,
     meeting_datetime: Date,
