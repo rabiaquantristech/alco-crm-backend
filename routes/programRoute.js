@@ -106,7 +106,7 @@ router.get("/public/:slug/batches", getProgramBatches);
 router.get("/name", getProgramsPublic);
 
 // ── FIRST ADMIN — Programs ──
-router.get("/", protect, authorize("admin", "super_admin"), adminGetPrograms);
+router.get("/", protect, authorize("admin", "super_admin", "sales_manager", "sales_rep"), adminGetPrograms);
 router.post("/", protect, authorize("admin", "super_admin"), adminCreateProgram);
 router.post("/:id/duplicate", protect, authorize("admin", "super_admin"), adminDuplicateProgram);
 
@@ -138,7 +138,7 @@ router.put("/lessons/:id", protect, authorize("admin", "super_admin"), adminUpda
 router.delete("/lessons/:id", protect, authorize("admin", "super_admin"), adminDeleteLesson);
 
 // ── LAST ADMIN — Programs ──
-router.get("/:id", protect, authorize("admin", "super_admin"), adminGetProgramById);
+router.get("/:id", protect, authorize("admin", "super_admin", "sales_manager", "sales_rep"), adminGetProgramById);
 router.put("/:id", protect, authorize("admin", "super_admin"), adminUpdateProgram);
 router.delete("/:id", protect, authorize("admin", "super_admin"), adminDeleteProgram);
 
