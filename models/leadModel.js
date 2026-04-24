@@ -46,6 +46,12 @@ const leadSchema = new mongoose.Schema(
       ref: "Program",
     },
 
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     goals: [String],
     message: String,
     query: String,

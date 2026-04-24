@@ -231,195 +231,388 @@ const generateColor = require("../utils/generateColor.js");
 //         res.status(500).json({ message: error.message });
 //     }
 // };
-exports.createLead = async (req, res) => {
-    console.log("REQ BODY:", req.body);  // ← yeh add karo
-    console.log("PHONE:", req.body.phone);  // ← yeh add karo
-    try {
-        const email = req.body.email?.toLowerCase().trim();
-        const { first_name, last_name, program_id } = req.body;
+// --------------------24/4/2026--------------------
+// exports.createLead = async (req, res) => {
+//     console.log("REQ BODY:", req.body);  // ← yeh add karo
+//     console.log("PHONE:", req.body.phone);  // ← yeh add karo
+//     try {
+//         const email = req.body.email?.toLowerCase().trim();
+//         const { first_name, last_name, program_id } = req.body;
 
-        if (!email || !first_name || !program_id) {
-            return res.status(400).json({
-                message: "Email, first name and program are required",
-            });
-        }
+//         if (!email || !first_name || !program_id) {
+//             return res.status(400).json({
+//                 message: "Email, first name and program are required",
+//             });
+//         }
 
-        // ── Step 1: User check ────────────────────────────────
-        // ── Step 1: User check ────────────────────────────────
-        const existingUser = await User.findOne({
-            email: email  // already lowercase trim ho chuka hai upar
-        });
+//         // ── Step 1: User check ────────────────────────────────
+//         // ── Step 1: User check ────────────────────────────────
+//         const existingUser = await User.findOne({
+//             email: email  // already lowercase trim ho chuka hai upar
+//         });
 
-        if (existingUser) {
-            // Same program check
-            const existingLead = await Lead.findOne({ email, program_id });
+//         if (existingUser) {
+//             // Same program check
+//             const existingLead = await Lead.findOne({ email, program_id });
 
-            if (existingLead) {
-                return res.status(200).json({
-                    success: true,
-                    duplicate: true,
-                    message: "Thank you for your interest! We already have your application and will contact you soon. 😊",
-                });
-            }
+//             if (existingLead) {
+//                 return res.status(200).json({
+//                     success: true,
+//                     duplicate: true,
+//                     message: "Thank you for your interest! We already have your application and will contact you soon. 😊",
+//                 });
+//             }
 
-            // ✅ Alag program — sirf lead banao
-            const lead = await Lead.create({
-                ...req.body,
-                email,
-                created_by: req.user?.id || null,
-            });
+//             // ✅ Alag program — sirf lead banao
+//             const lead = await Lead.create({
+//                 ...req.body,
+//                 email,
+//                 created_by: req.user?.id || null,
+//             });
 
-            return res.status(201).json({
-                success: true,
-                duplicate: false,
-                message: "Thank you for applying! We'll be in touch soon. 😊",
-                data: lead,
-            });
-        }
+//             return res.status(201).json({
+//                 success: true,
+//                 duplicate: false,
+//                 message: "Thank you for applying! We'll be in touch soon. 😊",
+//                 data: lead,
+//             });
+//         }
 
-        // ── Step 2: Naya user banao ───────────────────────────
-        const plainPassword = Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+//         // ── Step 2: Naya user banao ───────────────────────────
+//         const plainPassword = Math.random().toString(36).slice(-8);
+//         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-        const newUser = await User.create({
-            name: `${first_name} ${last_name || ""}`.trim(),
-            email,
-            phone: req.body.phone || null,  // ← ADD KARO
-            password: hashedPassword,
-            role: "user",
-            isVerified: true,
-            isActive: true,
-            avatarColor: generateColor(email),
-            isTemporaryPassword: true,
-        });
+//         const newUser = await User.create({
+//             name: `${first_name} ${last_name || ""}`.trim(),
+//             email,
+//             phone: req.body.phone || null,  // ← ADD KARO
+//             password: hashedPassword,
+//             role: "user",
+//             isVerified: true,
+//             isActive: true,
+//             avatarColor: generateColor(email),
+//             isTemporaryPassword: true,
+//         });
 
-        // ── Step 3: Lead banao ────────────────────────────────
-        const lead = await Lead.create({
-            ...req.body,
-            email,
-            created_by: req.user?.id || null,
-        });
+//         // ── Step 3: Lead banao ────────────────────────────────
+//         const lead = await Lead.create({
+//             ...req.body,
+//             email,
+//             created_by: req.user?.id || null,
+//         });
 
-        // ── Step 4: Credentials email bhejo ──────────────────
-        await sendEmailDynamic({
-            to: email,
-            subject: "Your Account Credentials 🔑",
-            templateName: "send-user-credentials",
-            replacements: {
-                UserName: `${first_name} ${last_name || ""}`,
-                UserEmail: email,
-                UserPassword: plainPassword,
-                SupportEmail: "alco@support.com",
-                YourCompanyName: "Al-and-co",
-                LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
-            },
-        });
+//         // ── Step 4: Credentials email bhejo ──────────────────
+//         await sendEmailDynamic({
+//             to: email,
+//             subject: "Your Account Credentials 🔑",
+//             templateName: "send-user-credentials",
+//             replacements: {
+//                 UserName: `${first_name} ${last_name || ""}`,
+//                 UserEmail: email,
+//                 UserPassword: plainPassword,
+//                 SupportEmail: "alco@support.com",
+//                 YourCompanyName: "Al-and-co",
+//                 LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+//             },
+//         });
 
-        return res.status(201).json({
-            success: true,
-            duplicate: false,
-            message: "Thank you for applying! Check your email for login details. 😊",
-            data: lead,
-        });
+//         return res.status(201).json({
+//             success: true,
+//             duplicate: false,
+//             message: "Thank you for applying! Check your email for login details. 😊",
+//             data: lead,
+//         });
 
-    } catch (error) {
-        console.log("FULL ERROR:", error); // ← yeh add karo temporarily
-        if (error.code === 11000) {
-            console.log("DUPLICATE KEY:", error.keyValue); // ← yeh bhi
-            return res.status(200).json({
-                success: true,
-                duplicate: true,
-                message: "Thank you! We already have your details. 😊",
-            });
-        }
-        res.status(500).json({ message: error.message });
-    }
-};
+//     } catch (error) {
+//         console.log("FULL ERROR:", error); // ← yeh add karo temporarily
+//         if (error.code === 11000) {
+//             console.log("DUPLICATE KEY:", error.keyValue); // ← yeh bhi
+//             return res.status(200).json({
+//                 success: true,
+//                 duplicate: true,
+//                 message: "Thank you! We already have your details. 😊",
+//             });
+//         }
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 
 // ─── Contact Form → Lead (website se aata hai) ────────────────
-exports.createLeadContact = async (req, res) => {
-    try {
-        const { first_name, last_name, email, phone, query } = req.body;
+// exports.createLeadContact = async (req, res) => {
+//     try {
+//         const { first_name, last_name, email, phone, query } = req.body;
 
-        if (!first_name || !email) {
-            return res.status(400).json({
-                success: false,
-                message: "First name and email are required",
-            });
-        }
+//         if (!first_name || !email) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "First name and email are required",
+//             });
+//         }
 
-        const cleanEmail = email.toLowerCase().trim();
+//         const cleanEmail = email.toLowerCase().trim();
 
-        // 🔍 Check existing lead
-        const existingLead = await Lead.findOne({ email: cleanEmail });
+//         // 🔍 Check existing lead
+//         const existingLead = await Lead.findOne({ email: cleanEmail });
 
-        // 🔍 Check existing user
-        const existingUser = await User.findOne({ email: cleanEmail });
+//         // 🔍 Check existing user
+//         const existingUser = await User.findOne({ email: cleanEmail });
 
-        const plainPassword = Math.random().toString(36).slice(-8);
-        const hashedPass = await bcrypt.hash(plainPassword, 10);
+//         const plainPassword = Math.random().toString(36).slice(-8);
+//         const hashedPass = await bcrypt.hash(plainPassword, 10);
 
-        // ✅ USER CREATE (always check)
-        if (!existingUser) {
-            await User.create({
-                name: `${first_name} ${last_name || ""}`.trim(),
-                email: cleanEmail,
-                phone: phone || null,
-                password: hashedPass,
-                role: "user",
-                isVerified: true,
-                isActive: true,
-                avatarColor: generateColor(cleanEmail),
-                isTemporaryPassword: true,
-            });
-        }
+//         // ✅ USER CREATE (always check)
+//         if (!existingUser) {
+//             await User.create({
+//                 name: `${first_name} ${last_name || ""}`.trim(),
+//                 email: cleanEmail,
+//                 phone: phone || null,
+//                 password: hashedPass,
+//                 role: "user",
+//                 isVerified: true,
+//                 isActive: true,
+//                 avatarColor: generateColor(cleanEmail),
+//                 isTemporaryPassword: true,
+//             });
+//         }
 
-        // ❌ Lead already exist → sirf response do (but user ban chuka hoga)
-        if (existingLead) {
-            return res.status(200).json({
-                success: true,
-                duplicate: true,
-                message: "Thank you! We already have your details 😊",
-            });
-        }
+//         // ❌ Lead already exist → sirf response do (but user ban chuka hoga)
+//         if (existingLead) {
+//             return res.status(200).json({
+//                 success: true,
+//                 duplicate: true,
+//                 message: "Thank you! We already have your details 😊",
+//             });
+//         }
 
-        // ✅ New Lead create
-        const lead = await Lead.create({
-            first_name: first_name.trim(),
-            last_name: (last_name || "").trim(),
-            email: cleanEmail,
-            phone: phone || null,
-            query: query || null,
-            source: "contact",
-            status: "new",
-            quality: "cold",
-        });
+//         // ✅ New Lead create
+//         const lead = await Lead.create({
+//             first_name: first_name.trim(),
+//             last_name: (last_name || "").trim(),
+//             email: cleanEmail,
+//             phone: phone || null,
+//             query: query || null,
+//             source: "contact",
+//             status: "new",
+//             quality: "cold",
+//         });
 
-        await sendEmailDynamic({
-            to: email,
-            subject: "Your Account Credentials 🔑",
-            templateName: "send-user-credentials",
-            replacements: {
-                UserName: `${first_name} ${last_name || ""}`,
-                UserEmail: email,
-                UserPassword: plainPassword,
-                SupportEmail: "alco@support.com",
-                YourCompanyName: "Al-and-co",
-                LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
-            },
-        });
+//         await sendEmailDynamic({
+//             to: email,
+//             subject: "Your Account Credentials 🔑",
+//             templateName: "send-user-credentials",
+//             replacements: {
+//                 UserName: `${first_name} ${last_name || ""}`,
+//                 UserEmail: email,
+//                 UserPassword: plainPassword,
+//                 SupportEmail: "alco@support.com",
+//                 YourCompanyName: "Al-and-co",
+//                 LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+//             },
+//         });
 
-        return res.status(201).json({
-            success: true,
-            duplicate: false,
-            message: "Thank you! We will contact you soon 😊",
-            data: { lead_id: lead._id },
-        });
+//         return res.status(201).json({
+//             success: true,
+//             duplicate: false,
+//             message: "Thank you! We will contact you soon 😊",
+//             data: { lead_id: lead._id },
+//         });
 
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+//     } catch (err) {
+//         res.status(500).json({ success: false, message: err.message });
+//     }
+// };
+// --------------------24/4/2026--------------------
+
+// ─── createLead (program form se) ────────────────────────────
+exports.createLead = async (req, res) => {
+  try {
+    const email = req.body.email?.toLowerCase().trim();
+    const { first_name, last_name, program_id } = req.body;
+
+    if (!email || !first_name || !program_id) {
+      return res.status(400).json({
+        message: "Email, first name and program are required",
+      });
     }
+
+    // ── Step 1: User check ──────────────────────────────────
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      // Same program pe duplicate check
+      const existingLead = await Lead.findOne({ email, program_id });
+
+      if (existingLead) {
+        return res.status(200).json({
+          success: true,
+          duplicate: true,
+          message: "Thank you for your interest! We already have your application and will contact you soon. 😊",
+        });
+      }
+
+      // ✅ Alag program — lead banao + existingUser ka _id lagao
+      const lead = await Lead.create({
+        ...req.body,
+        email,
+        user_id: existingUser._id, // ← existing user ka id
+        created_by: req.user?.id || null,
+      });
+
+      return res.status(201).json({
+        success: true,
+        duplicate: false,
+        message: "Thank you for applying! We'll be in touch soon. 😊",
+        data: lead,
+      });
+    }
+
+    // ── Step 2: Naya user banao ─────────────────────────────
+    const plainPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    const newUser = await User.create({
+      name: `${first_name} ${last_name || ""}`.trim(),
+      email,
+      phone: req.body.phone || null,
+      password: hashedPassword,
+      role: "user",
+      isVerified: true,
+      isActive: true,
+      avatarColor: generateColor(email),
+      isTemporaryPassword: true,
+    });
+
+    // ── Step 3: Lead banao + newUser ka _id lagao ───────────
+    const lead = await Lead.create({
+      ...req.body,
+      email,
+      user_id: newUser._id, // ← naya bana user ka id
+      created_by: req.user?.id || null,
+    });
+
+    // ── Step 4: Credentials email bhejo ────────────────────
+    await sendEmailDynamic({
+      to: email,
+      subject: "Your Account Credentials 🔑",
+      templateName: "send-user-credentials",
+      replacements: {
+        UserName: `${first_name} ${last_name || ""}`,
+        UserEmail: email,
+        UserPassword: plainPassword,
+        SupportEmail: "alco@support.com",
+        YourCompanyName: "Al-and-co",
+        LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      duplicate: false,
+      message: "Thank you for applying! Check your email for login details. 😊",
+      data: lead,
+    });
+
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        duplicate: true,
+        message: "Thank you! We already have your details. 😊",
+      });
+    }
+    res.status(500).json({ message: error.message });
+  }
 };
+
+
+// ─── createLeadContact (contact form se) ─────────────────────
+exports.createLeadContact = async (req, res) => {
+  try {
+    const { first_name, last_name, email, phone, query } = req.body;
+
+    if (!first_name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "First name and email are required",
+      });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    const existingLead = await Lead.findOne({ email: cleanEmail });
+    const existingUser = await User.findOne({ email: cleanEmail });
+
+    const plainPassword = Math.random().toString(36).slice(-8);
+    const hashedPass = await bcrypt.hash(plainPassword, 10);
+
+    // ── User create ya existing use karo ───────────────────
+    let userId;
+    if (existingUser) {
+      userId = existingUser._id; // ← existing user ka id
+    } else {
+      const newUser = await User.create({
+        name: `${first_name} ${last_name || ""}`.trim(),
+        email: cleanEmail,
+        phone: phone || null,
+        password: hashedPass,
+        role: "user",
+        isVerified: true,
+        isActive: true,
+        avatarColor: generateColor(cleanEmail),
+        isTemporaryPassword: true,
+      });
+      userId = newUser._id; // ← naya user ka id
+
+      // Sirf naye user ko credentials bhejo
+      await sendEmailDynamic({
+        to: email,
+        subject: "Your Account Credentials 🔑",
+        templateName: "send-user-credentials",
+        replacements: {
+          UserName: `${first_name} ${last_name || ""}`,
+          UserEmail: email,
+          UserPassword: plainPassword,
+          SupportEmail: "alco@support.com",
+          YourCompanyName: "Al-and-co",
+          LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+        },
+      });
+    }
+
+    // ── Duplicate lead check ────────────────────────────────
+    if (existingLead) {
+      return res.status(200).json({
+        success: true,
+        duplicate: true,
+        message: "Thank you! We already have your details 😊",
+      });
+    }
+
+    // ── Naya lead banao + user_id lagao ────────────────────
+    const lead = await Lead.create({
+      first_name: first_name.trim(),
+      last_name: (last_name || "").trim(),
+      email: cleanEmail,
+      phone: phone || null,
+      query: query || null,
+      source: "contact",
+      status: "new",
+      quality: "cold",
+      user_id: userId, // ← ab sahi se set ho raha hai
+    });
+
+    return res.status(201).json({
+      success: true,
+      duplicate: false,
+      message: "Thank you! We will contact you soon 😊",
+      data: { lead_id: lead._id },
+    });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 // GET LEADS 
 exports.getLeads = async (req, res) => {
@@ -511,40 +704,43 @@ exports.getLeadById = async (req, res) => {
 //     }
 // };
 exports.updateLead = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const oldLead = await Lead.findById(id);
-    if (!oldLead) {
-      return res.status(404).json({ message: "Lead not found" });
+        const oldLead = await Lead.findById(id);
+        if (!oldLead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
+
+        const updated = await Lead.findByIdAndUpdate(
+            id,
+            req.body,
+            { returnDocument: "after", runValidators: true }
+        );
+
+        console.log("OLD LEAD:", oldLead);
+        console.log("UPDATED LEAD:", updated);
+
+        // ✅ Status change check
+        if (
+            req.body.status &&
+            oldLead.status !== req.body.status &&
+            updated.user_id
+        ) {
+            await notifyStatusChanged({
+                userId: updated.user_id.toString(),
+                leadName: `${updated.first_name} ${updated.last_name}`,
+                leadId: updated._id.toString(),
+                newStatus: req.body.status,
+                changedBy: req.user?._id?.toString(),
+            });
+        }
+
+        res.json({ success: true, data: updated });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    const updated = await Lead.findByIdAndUpdate(
-      id,
-      req.body,
-      { returnDocument: "after", runValidators: true }
-    );
-
-    // ✅ Status change check
-    if (
-      req.body.status &&
-      oldLead.status !== req.body.status &&
-      updated.user_id
-    ) {
-      await notifyStatusChanged({
-        userId: updated.user_id.toString(),
-        leadName: `${updated.first_name} ${updated.last_name}`,
-        leadId: updated._id.toString(),
-        newStatus: req.body.status,
-        changedBy: req.user?._id?.toString(),
-      });
-    }
-
-    res.json({ success: true, data: updated });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
 
 // DELETE LEAD
