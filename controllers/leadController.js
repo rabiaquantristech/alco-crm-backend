@@ -1001,7 +1001,7 @@ exports.addActivity = async (req, res) => {
                 await sendEmailDynamic({
                     to: user.email,
                     subject: `New ${activity_type} logged on your request`,
-                    templateName: "activityAdded",
+                    templateName: "lead-activity-added",
                     replacements: {
                         UserName: user.name || lead.first_name,
                         YourCompanyName: "Al-and-co",
