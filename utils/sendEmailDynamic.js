@@ -8,6 +8,8 @@ const templates = {
     "send-user-credentials": require("../template/send-user-credentials.js"),
     "lead-status-update": require("../template/lead-status-update.js"),
     "lead-activity-added": require("../template/lead-activity-added.js"),
+    "lead-converted": require("../template/lead-converted.js"),
+    "lead-lost": require("../template/lead-lost.js"),
 };
 
 const sendEmailDynamic = async (options) => {

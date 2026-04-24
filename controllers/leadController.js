@@ -840,59 +840,157 @@ exports.assignLead = async (req, res) => {
 };
 
 // CONVERT LEAD STATUS
-exports.convertLead = async (req, res) => {
-    try {
-        const { program_id, batch_id, payment_plan_id } = req.body;
+// exports.convertLead = async (req, res) => {
+//     try {
+//         const { program_id, batch_id, payment_plan_id } = req.body;
 
-        if (!program_id) {
-            return res.status(400).json({ message: "program_id is required" });
-        }
+//         if (!program_id) {
+//             return res.status(400).json({ message: "program_id is required" });
+//         }
 
-        const lead = await Lead.findByIdAndUpdate(
-            req.params.id,
-            {
-                status: "converted",
-                program_id,
-                batch_id,
-                payment_plan_id,
-                converted_at: new Date(),
-            },
-            { new: true }
-        );
+//         const lead = await Lead.findByIdAndUpdate(
+//             req.params.id,
+//             {
+//                 status: "converted",
+//                 program_id,
+//                 batch_id,
+//                 payment_plan_id,
+//                 converted_at: new Date(),
+//             },
+//             { new: true }
+//         );
 
-        if (!lead) {
-            return res.status(404).json({ message: "Lead not found" });
-        }
+//         if (!lead) {
+//             return res.status(404).json({ message: "Lead not found" });
+//         }
 
-        res.status(200).json({
-            success: true,
-            data: lead,
-        });
+//         res.status(200).json({
+//             success: true,
+//             data: lead,
+//         });
 
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 
 // LOST LEAD STATUS
-exports.setLeadToLost = async (req, res) => {
-    try {
-        const { lost_reason, lost_notes } = req.body;
+// exports.setLeadToLost = async (req, res) => {
+//     try {
+//         const { lost_reason, lost_notes } = req.body;
 
-        const lead = await Lead.findByIdAndUpdate(
-            req.params.id,
-            {
-                status: "lost",
-                lost_reason,    // ✅ save karo
-                lost_notes,
-            },
-            { new: true }
-        );
+//         const lead = await Lead.findByIdAndUpdate(
+//             req.params.id,
+//             {
+//                 status: "lost",
+//                 lost_reason,    // ✅ save karo
+//                 lost_notes,
+//             },
+//             { new: true }
+//         );
 
-        res.status(200).json({ success: true, data: lead });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+//         res.status(200).json({ success: true, data: lead });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
+// CONVERT LEAD
+exports.convertLead = async (req, res) => {
+  try {
+    const { program_id, batch_id, payment_plan_id } = req.body;
+
+    if (!program_id) {
+      return res.status(400).json({ message: "program_id is required" });
     }
+
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { status: "converted", program_id, batch_id, payment_plan_id, converted_at: new Date() },
+      { new: true }
+    );
+
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    // ✅ Notify + Email
+    if (lead.user_id) {
+      // 1. In-app notification
+      await notifyStatusChanged({
+        userId: lead.user_id.toString(),
+        leadName: `${lead.first_name} ${lead.last_name}`,
+        leadId: lead._id.toString(),
+        newStatus: "converted",
+        changedBy: req.user?._id?.toString(),
+      });
+
+      // 2. Email
+      const user = await User.findById(lead.user_id).select("email name");
+      if (user?.email) {
+        await sendEmailDynamic({
+          to: user.email,
+          subject: "Congratulations! Your Enrollment is Confirmed 🎉",
+          templateName: "lead-converted",
+          replacements: {
+            UserName: user.name || lead.first_name,
+            SupportEmail: "alco@support.com",
+            YourCompanyName: "Al-and-co",
+          },
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: lead });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// LOST LEAD
+exports.setLeadToLost = async (req, res) => {
+  try {
+    const { lost_reason, lost_notes } = req.body;
+
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { status: "lost", lost_reason, lost_notes },
+      { new: true }
+    );
+
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    // ✅ Notify + Email
+    if (lead.user_id) {
+      // 1. In-app notification
+      await notifyStatusChanged({
+        userId: lead.user_id.toString(),
+        leadName: `${lead.first_name} ${lead.last_name}`,
+        leadId: lead._id.toString(),
+        newStatus: "lost",
+        changedBy: req.user?._id?.toString(),
+      });
+
+      // 2. Email
+      const user = await User.findById(lead.user_id).select("email name");
+      if (user?.email) {
+        await sendEmailDynamic({
+          to: user.email,
+          subject: "Update Regarding Your Request",
+          templateName: "lead-lost",
+          replacements: {
+            UserName: user.name || lead.first_name,
+            LostReason: lost_reason || "Not specified",
+            SupportEmail: "alco@support.com",
+            YourCompanyName: "Al-and-co",
+          },
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: lead });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // GET ACTIVITIES
