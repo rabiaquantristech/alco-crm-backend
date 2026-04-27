@@ -26,17 +26,27 @@ const invoiceSchema = new mongoose.Schema(
 
     dueDate: Date,
 
-    installments: [
-      {
-        amount: Number,
-        dueDate: Date,
-        paidAmount: { type: Number, default: 0 },
-        status: {
-          type: String,
-          enum: ["PENDING", "PAID", "OVERDUE"],
-          default: "PENDING",
-        },
+    installments: [{
+      label: {
+        type: String,
+        default: "Installment"
       },
+      amount: Number,
+      dueDate: Date,
+      paidAmount: {
+        type: Number,
+        default: 0
+      },
+      status: {
+        type: String,
+        enum: ["PENDING", "PAID", "OVERDUE"],
+        default: "PENDING",
+      },
+      isAdvance: {
+        type: Boolean,
+        default: false
+      },
+    },
     ],
   },
   { timestamps: true }

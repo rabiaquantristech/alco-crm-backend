@@ -224,26 +224,113 @@ exports.getPaymentById = async (req, res) => {
 };
 
 // APPROVE PAYMENT
+// exports.approvePayment = async (req, res) => {
+//   try {
+//     const payment = await Payment.findById(req.params.id);
+//     if (!payment) return res.status(404).json({ success: false, message: "Payment not found" });
+//     if (payment.status === "approved") return res.status(400).json({ success: false, message: "Payment already approved" });
+
+//     const before = payment.toObject();
+
+//     payment.status = "approved";
+//     payment.approvedBy = req.user.id;
+//     payment.approvedAt = new Date();
+//     await payment.save();
+
+//     // Update invoice paidAmount and remainingAmount
+//     const invoice = await Invoice.findById(payment.invoice);
+//     if (invoice) {
+//       invoice.paidAmount = (invoice.paidAmount || 0) + payment.amount;
+//       invoice.remainingAmount = Math.max(0, invoice.totalAmount - invoice.paidAmount);
+//       invoice.status = invoice.remainingAmount === 0 ? "PAID" : invoice.paidAmount > 0 ? "PARTIAL" : invoice.status;
+//       await invoice.save();
+//     }
+
+//     await logAudit({
+//       req,
+//       action: "PAYMENT_APPROVED",
+//       module: "finance",
+//       targetId: payment._id,
+//       before,
+//       after: payment.toObject(),
+//     });
+
+//     res.json({ success: true, message: "Payment approved", data: payment });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+// controllers/financeController.js — approvePayment update
+
 exports.approvePayment = async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id);
-    if (!payment) return res.status(404).json({ success: false, message: "Payment not found" });
-    if (payment.status === "approved") return res.status(400).json({ success: false, message: "Payment already approved" });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found" });
+    }
+    if (payment.status === "approved") {
+      return res.status(400).json({ success: false, message: "Already approved" });
+    }
 
     const before = payment.toObject();
 
+    // ── Payment approve karo ────────────────────────────────
     payment.status = "approved";
     payment.approvedBy = req.user.id;
     payment.approvedAt = new Date();
     await payment.save();
 
-    // Update invoice paidAmount and remainingAmount
+    // ── Invoice update karo ─────────────────────────────────
     const invoice = await Invoice.findById(payment.invoice);
     if (invoice) {
       invoice.paidAmount = (invoice.paidAmount || 0) + payment.amount;
-      invoice.remainingAmount = Math.max(0, invoice.totalAmount - invoice.paidAmount);
-      invoice.status = invoice.remainingAmount === 0 ? "PAID" : invoice.paidAmount > 0 ? "PARTIAL" : invoice.status;
+      invoice.remainingAmount = Math.max(
+        0,
+        invoice.totalAmount - invoice.paidAmount
+      );
+      invoice.status =
+        invoice.remainingAmount === 0
+          ? "PAID"
+          : invoice.paidAmount > 0
+          ? "PARTIAL"
+          : invoice.status;
+
+      // ── Installment mark karo jis ka amount match kare ────
+      const matchingInst = invoice.installments.find(
+        (inst) =>
+          inst.status === "PENDING" &&
+          Number(inst.amount) === Number(payment.amount)
+      );
+      if (matchingInst) {
+        matchingInst.status = "PAID";
+        matchingInst.paidAmount = payment.amount;
+      }
+
       await invoice.save();
+
+      // ── KEY: Advance pay hua? Enrollment ACTIVE karo ───────
+      const advanceInstallment = invoice.installments.find(
+        (inst) => inst.isAdvance === true
+      );
+
+      const advancePaid = advanceInstallment?.status === "PAID";
+
+      if (advancePaid) {
+        // Enrollment ka accessStatus ACTIVE karo
+        await Enrollment.findByIdAndUpdate(invoice.enrollment, {
+          accessStatus: "ACTIVE", // ← Student ko access mil gaya
+        });
+
+        console.log(`Enrollment ACTIVE: advance paid for enrollment ${invoice.enrollment}`);
+
+        await logAudit({
+          req,
+          action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
+          module: "finance",
+          targetId: invoice.enrollment,
+          after: { accessStatus: "ACTIVE", paidBy: payment.user },
+        });
+      }
     }
 
     await logAudit({
@@ -255,11 +342,20 @@ exports.approvePayment = async (req, res) => {
       after: payment.toObject(),
     });
 
-    res.json({ success: true, message: "Payment approved", data: payment });
+    res.json({
+      success: true,
+      message: advancePaid
+        ? "Payment approved — Enrollment activated!"
+        : "Payment approved",
+      data: payment,
+      enrollmentActivated: advancePaid ?? false,
+    });
+
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // REJECT PAYMENT
 exports.rejectPayment = async (req, res) => {
