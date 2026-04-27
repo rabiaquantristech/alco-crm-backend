@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const invoiceSchema = new mongoose.Schema(
   {
+    invoiceNumber: { type: String, unique: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     enrollment: { type: mongoose.Schema.Types.ObjectId, ref: "Enrollment" },
 

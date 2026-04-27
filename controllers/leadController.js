@@ -950,173 +950,247 @@ exports.assignLead = async (req, res) => {
 // };
 
 exports.convertLead = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) {
-      return res.status(404).json({ success: false, message: "Lead not found" });
+    try {
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) {
+            return res.status(404).json({ success: false, message: "Lead not found" });
+        }
+
+        if (!lead.paymentPlan) {
+            return res.status(400).json({
+                success: false,
+                message: "Payment plan set karo pehle lead convert karne se pehle",
+            });
+        }
+
+        // ── Step 1: Lead status update ──────────────────────────
+        lead.status = "converted";
+        await lead.save();
+
+        // ── Step 2: User dhundho ya banao ───────────────────────
+        const tempPassword = crypto.randomBytes(8).toString("hex");
+        let user = await User.findOne({ email: lead.email });
+        let isNewUser = false;
+
+        if (!user) {
+            isNewUser = true;
+            user = await User.create({
+                name: `${lead.first_name} ${lead.last_name}`,
+                email: lead.email,
+                phone: lead.phone,
+                role: "student",
+                password: tempPassword,
+            });
+        }
+
+        // ── Step 3: Enrollment "pending" status pe banao ────────
+        // ACTIVE nahi — jab tak advance pay na ho
+        const enrollment = await Enrollment.create({
+            user: user._id,
+            program: lead.program_id,
+            batch: lead.batch_id,
+            status: "pending",           // main status
+            accessStatus: "RESTRICTED", // ← ACCESS band hai abhi
+            // accessStatus sirf advance approve hone pe ACTIVE hoga
+        });
+
+        // ── Step 4: Invoice banao (advance + installments) ──────
+        const {
+            totalAmount,
+            advanceAmount,
+            advanceDueDate,
+            installments,
+            notes,
+        } = lead.paymentPlan;
+
+        // Advance bhi ek installment ki tarah track karo
+        const allInstallments = [
+            // ── Advance installment (PEHLI) ──
+            {
+                label: "Advance",
+                amount: advanceAmount,
+                dueDate: advanceDueDate,
+                status: "PENDING",
+                paidAmount: 0,
+                isAdvance: true,  // flag — yeh advance hai
+            },
+            // ── Baaki installments ──
+            ...installments.map((inst) => ({
+                label: inst.label || "Installment",
+                amount: inst.amount,
+                dueDate: inst.dueDate,
+                status: "PENDING",
+                paidAmount: 0,
+                isAdvance: false,
+            })),
+        ];
+
+        const invoice = await Invoice.create({
+            user: user._id,
+            enrollment: enrollment._id,
+            totalAmount,
+            remainingAmount: totalAmount,
+            paidAmount: 0,
+            dueDate: advanceDueDate, // pehli due date = advance
+            installments: allInstallments,
+            notes: notes || "",
+            status: "PENDING",
+        });
+
+        // ── Step 5: Enrollment pe invoice link karo ─────────────
+        await Enrollment.findByIdAndUpdate(enrollment._id, {
+            invoice: invoice._id,
+        });
+
+        // ── Step 6: Audit log ────────────────────────────────────
+        await logAudit({
+            req,
+            action: "LEAD_CONVERTED",
+            module: "leads",
+            targetId: lead._id,
+            after: { enrollment: enrollment._id, invoice: invoice._id, user: user._id },
+        });
+
+        // ── Step 7: Email bhejo (credentials + invoice info) ─────
+        // TODO: sendEmail(user.email, tempPassword, invoice)
+
+        res.status(201).json({
+            success: true,
+            message: "Lead converted — enrollment pending advance payment",
+            data: {
+                user: { _id: user._id, name: user.name, email: user.email, isNewUser },
+                enrollment: { _id: enrollment._id, accessStatus: "RESTRICTED" },
+                invoice: { _id: invoice._id, totalAmount, advanceAmount, status: "PENDING" },
+                // ↑ frontend ko pata chale ke advance pending hai
+            },
+        });
+
+        // convertLead ke andar — Step 8: EMAIL BHEJO
+        const formatDate = (d) =>
+            d ? new Date(d).toLocaleDateString("en-PK", {
+                day: "2-digit", month: "short", year: "numeric"
+            }) : "—";
+
+        const formatAmount = (n) =>
+            Number(n || 0).toLocaleString("en-PK");
+
+        // ── Installment rows HTML generate karo ──────────────────
+        const installmentRows = invoice.installments
+            .map((inst, i) => {
+                const isAdvance = inst.isAdvance;
+                const statusClass = inst.status === "PAID" ? "paid" : "";
+                return `
+      <tr class="${isAdvance ? "advance-row" : ""}">
+        <td class="td-num">${String(i + 1).padStart(2, "0")}</td>
+        <td class="td-desc">
+          ${isAdvance ? `Advance Payment <span class="badge-advance">Advance</span>` : inst.label || `Installment ${i}`}
+          <small>${isAdvance ? "Required to activate enrollment" : "Monthly installment"}</small>
+        </td>
+        <td class="td-date">${formatDate(inst.dueDate)}</td>
+        <td><span class="inst-status ${statusClass}">${inst.status}</span></td>
+        <td class="td-amount">Rs ${formatAmount(inst.amount)}</td>
+      </tr>`;
+            })
+            .join("");
+
+        // ── Email bhejo ───────────────────────────────────────────
+        try {
+            await sendEmailDynamic({
+                to: user.email,
+                subject: `Your Enrollment Invoice ${invoice.invoiceNumber} | ALCO`,
+                templateName: "generate-invoice",
+                replacements: {
+                    // Invoice meta
+                    invoiceNumber: invoice.invoiceNumber,
+                    invoiceStatus: invoice.status,
+                    issueDate: formatDate(new Date()),
+                    advanceDueDate: formatDate(invoice.dueDate),
+                    enrollmentId: enrollment._id.toString().slice(0, 8) + "..." + enrollment._id.toString().slice(-4),
+
+                    // Student info
+                    studentName: user.name,
+                    studentEmail: user.email,
+                    studentPhone: user.phone || "—",
+                    studentProfession: lead.profession || "—",
+
+                    // Issued by
+                    salesManagerName: lead.assigned_to?.name || "Sales Team",
+                    salesManagerEmail: lead.assigned_to?.email || "sales@alco.com",
+
+                    // Program
+                    programName: program?.name || "NLP Program",
+                    planNotes: lead.paymentPlan.notes || "",
+
+                    // Installments table
+                    installmentRows,
+
+                    // Amounts
+                    totalAmount: formatAmount(invoice.totalAmount),
+                    paidAmount: formatAmount(invoice.paidAmount || 0),
+                    remainingAmount: formatAmount(invoice.remainingAmount || invoice.totalAmount),
+                    advanceAmount: formatAmount(invoice.installments.find(i => i.isAdvance)?.amount || 0),
+                },
+            });
+
+            console.log(`Invoice email sent to ${user.email}`);
+        } catch (emailErr) {
+            // Email fail ho to convert fail nahi hona chahiye
+            console.error("Invoice email failed:", emailErr.message);
+        }
+
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
-
-    if (!lead.paymentPlan) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment plan set karo pehle lead convert karne se pehle",
-      });
-    }
-
-    // ── Step 1: Lead status update ──────────────────────────
-    lead.status = "converted";
-    await lead.save();
-
-    // ── Step 2: User dhundho ya banao ───────────────────────
-    const tempPassword = crypto.randomBytes(8).toString("hex");
-    let user = await User.findOne({ email: lead.email });
-    let isNewUser = false;
-
-    if (!user) {
-      isNewUser = true;
-      user = await User.create({
-        name: `${lead.first_name} ${lead.last_name}`,
-        email: lead.email,
-        phone: lead.phone,
-        role: "student",
-        password: tempPassword,
-      });
-    }
-
-    // ── Step 3: Enrollment "pending" status pe banao ────────
-    // ACTIVE nahi — jab tak advance pay na ho
-    const enrollment = await Enrollment.create({
-      user: user._id,
-      program: lead.program_id,
-      batch: lead.batch_id,
-      status: "active",           // main status
-      accessStatus: "RESTRICTED", // ← ACCESS band hai abhi
-      // accessStatus sirf advance approve hone pe ACTIVE hoga
-    });
-
-    // ── Step 4: Invoice banao (advance + installments) ──────
-    const {
-      totalAmount,
-      advanceAmount,
-      advanceDueDate,
-      installments,
-      notes,
-    } = lead.paymentPlan;
-
-    // Advance bhi ek installment ki tarah track karo
-    const allInstallments = [
-      // ── Advance installment (PEHLI) ──
-      {
-        label: "Advance",
-        amount: advanceAmount,
-        dueDate: advanceDueDate,
-        status: "PENDING",
-        paidAmount: 0,
-        isAdvance: true,  // flag — yeh advance hai
-      },
-      // ── Baaki installments ──
-      ...installments.map((inst) => ({
-        label: inst.label || "Installment",
-        amount: inst.amount,
-        dueDate: inst.dueDate,
-        status: "PENDING",
-        paidAmount: 0,
-        isAdvance: false,
-      })),
-    ];
-
-    const invoice = await Invoice.create({
-      user: user._id,
-      enrollment: enrollment._id,
-      totalAmount,
-      remainingAmount: totalAmount,
-      paidAmount: 0,
-      dueDate: advanceDueDate, // pehli due date = advance
-      installments: allInstallments,
-      notes: notes || "",
-      status: "PENDING",
-    });
-
-    // ── Step 5: Enrollment pe invoice link karo ─────────────
-    await Enrollment.findByIdAndUpdate(enrollment._id, {
-      invoice: invoice._id,
-    });
-
-    // ── Step 6: Audit log ────────────────────────────────────
-    await logAudit({
-      req,
-      action: "LEAD_CONVERTED",
-      module: "leads",
-      targetId: lead._id,
-      after: { enrollment: enrollment._id, invoice: invoice._id, user: user._id },
-    });
-
-    // ── Step 7: Email bhejo (credentials + invoice info) ─────
-    // TODO: sendEmail(user.email, tempPassword, invoice)
-
-    res.status(201).json({
-      success: true,
-      message: "Lead converted — enrollment pending advance payment",
-      data: {
-        user: { _id: user._id, name: user.name, email: user.email, isNewUser },
-        enrollment: { _id: enrollment._id, accessStatus: "RESTRICTED" },
-        invoice: { _id: invoice._id, totalAmount, advanceAmount, status: "PENDING" },
-        // ↑ frontend ko pata chale ke advance pending hai
-      },
-    });
-
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
 };
 
 
 
 // LOST LEAD
 exports.setLeadToLost = async (req, res) => {
-  try {
-    const { lost_reason, lost_notes } = req.body;
+    try {
+        const { lost_reason, lost_notes } = req.body;
 
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      { status: "lost", lost_reason, lost_notes },
-      { new: true }
-    );
+        const lead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            { status: "lost", lost_reason, lost_notes },
+            { new: true }
+        );
 
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
+        if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // ✅ Notify + Email
-    if (lead.user_id) {
-      // 1. In-app notification
-      await notifyStatusChanged({
-        userId: lead.user_id.toString(),
-        leadName: `${lead.first_name} ${lead.last_name}`,
-        leadId: lead._id.toString(),
-        newStatus: "lost",
-        changedBy: req.user?._id?.toString(),
-      });
+        // ✅ Notify + Email
+        if (lead.user_id) {
+            // 1. In-app notification
+            await notifyStatusChanged({
+                userId: lead.user_id.toString(),
+                leadName: `${lead.first_name} ${lead.last_name}`,
+                leadId: lead._id.toString(),
+                newStatus: "lost",
+                changedBy: req.user?._id?.toString(),
+            });
 
-      // 2. Email
-      const user = await User.findById(lead.user_id).select("email name");
-      if (user?.email) {
-        await sendEmailDynamic({
-          to: user.email,
-          subject: "Update Regarding Your Request",
-          templateName: "lead-lost",
-          replacements: {
-            UserName: user.name || lead.first_name,
-            LostReason: lost_reason || "Not specified",
-            SupportEmail: "alco@support.com",
-            YourCompanyName: "Al-and-co",
-          },
-        });
-      }
+            // 2. Email
+            const user = await User.findById(lead.user_id).select("email name");
+            if (user?.email) {
+                await sendEmailDynamic({
+                    to: user.email,
+                    subject: "Update Regarding Your Request",
+                    templateName: "lead-lost",
+                    replacements: {
+                        UserName: user.name || lead.first_name,
+                        LostReason: lost_reason || "Not specified",
+                        SupportEmail: "alco@support.com",
+                        YourCompanyName: "Al-and-co",
+                    },
+                });
+            }
+        }
+
+        res.status(200).json({ success: true, data: lead });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    res.status(200).json({ success: true, data: lead });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
 
 // GET ACTIVITIES

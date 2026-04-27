@@ -18,7 +18,11 @@ exports.createInvoice = async (req, res) => {
       return res.status(400).json({ success: false, message: "user, enrollment, totalAmount are required" });
     }
 
+    const count = await Invoice.countDocuments();
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+
     const invoice = await Invoice.create({
+      invoiceNumber,
       user,
       enrollment,
       totalAmount,
@@ -292,8 +296,8 @@ exports.approvePayment = async (req, res) => {
         invoice.remainingAmount === 0
           ? "PAID"
           : invoice.paidAmount > 0
-          ? "PARTIAL"
-          : invoice.status;
+            ? "PARTIAL"
+            : invoice.status;
 
       // ── Installment mark karo jis ka amount match kare ────
       const matchingInst = invoice.installments.find(
@@ -620,7 +624,7 @@ exports.getMyInvoices = async (req, res) => {
         populate: { path: "program", select: "name" },
       })
       .sort({ createdAt: -1 });
- 
+
     // Har invoice ke saath payments bhi attach karo
     const result = await Promise.all(
       invoices.map(async (inv) => {
@@ -628,11 +632,11 @@ exports.getMyInvoices = async (req, res) => {
           invoice: inv._id,
           status: "approved",
         }).select("amount method referenceNumber createdAt").sort({ createdAt: -1 });
- 
+
         return { ...inv.toObject(), payments };
       })
     );
- 
+
     res.json({ success: true, data: result });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

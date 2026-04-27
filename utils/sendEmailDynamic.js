@@ -10,6 +10,7 @@ const templates = {
     "lead-activity-added": require("../template/lead-activity-added.js"),
     "lead-converted": require("../template/lead-converted.js"),
     "lead-lost": require("../template/lead-lost.js"),
+    "generate-invoice": require("../template/generate-invoice.js"),
 };
 
 const sendEmailDynamic = async (options) => {
