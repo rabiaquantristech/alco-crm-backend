@@ -31,7 +31,6 @@ const {
 // your existing JWT middleware
 const { protect } = require("../middlewares/authMiddleware.js");
 const { authorize } = require("../middlewares/roleMiddleware.js");
-// const { isFinanceManager, isAdmin } = require("../middleware/roleMiddleware");
 
 // ─── INVOICE ROUTES ───────────────────────────────────────────
 router.post("/invoices", protect, authorize("finance_manager", "admin", "super_admin"), createInvoice);
