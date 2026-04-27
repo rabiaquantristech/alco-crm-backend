@@ -4,15 +4,28 @@ const mongoose = require("mongoose");
 const accessOverrideSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ["ADMIN_GRANT"],
+    enum: ["ADMIN_GRANT", "AUTO_GRANT", "MANUAL_OVERRIDE"], // Expanded for future types
+    required: true,
   },
-  startDate: Date,
-  endDate: Date,
+  startDate: {
+    type: Date,
+    required: true,
+  },
+  endDate: {
+    type: Date,
+    required: true,
+  },
   grantedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 }, { _id: false });
+
 
 const enrollmentSchema = new mongoose.Schema(
   {

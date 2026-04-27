@@ -113,6 +113,30 @@ const leadSchema = new mongoose.Schema(
       },
     ],
 
+    paymentPlan: {
+      totalAmount: Number,
+      advanceAmount: Number,
+      advanceDueDate: Date,
+      installments: [
+        {
+          label: String,
+          amount: Number,
+          dueDate: Date,
+          status: {
+            type: String,
+            enum: ["pending", "paid"],
+            default: "pending"
+          }
+        }
+      ],
+      notes: String,
+      createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      },
+      createdAt: { type: Date, default: Date.now }
+    },
+
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
