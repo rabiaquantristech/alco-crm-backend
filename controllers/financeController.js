@@ -118,7 +118,6 @@ exports.markInvoicePaid = async (req, res) => {
 };
 
 // financeController.js mein add karo
-
 exports.markInstallmentPaid = async (req, res) => {
   try {
     const { invoiceId, installmentId } = req.params;
@@ -196,6 +195,101 @@ exports.markInstallmentPaid = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// financeController.js mein add karo
+
+// ── Installment Edit ─────────────────────────────────────────────
+exports.updateInstallment = async (req, res) => {
+  try {
+    const { invoiceId, installmentId } = req.params;
+    const { label, amount, dueDate } = req.body;
+
+    const invoice = await Invoice.findById(invoiceId);
+    if (!invoice)
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+
+    const installment = invoice.installments.id(installmentId);
+    if (!installment)
+      return res.status(404).json({ success: false, message: "Installment not found" });
+
+    const before = invoice.toObject();
+
+    if (label)   installment.label   = label;
+    if (amount !== undefined) installment.amount = Number(amount);
+    if (dueDate) installment.dueDate = new Date(dueDate);
+
+    // Recalculate totalAmount from all installments
+    const newTotal = invoice.installments.reduce(
+      (sum, inst) => sum + (inst.amount || 0), 0
+    );
+    invoice.totalAmount     = newTotal;
+    invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
+
+    await invoice.save();
+
+    await logAudit({
+      req,
+      action: "INSTALLMENT_UPDATED",
+      module: "finance",
+      targetId: invoice._id,
+      before,
+      after: invoice.toObject(),
+    });
+
+    res.json({ success: true, message: "Installment updated", data: invoice });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ── Installment Add ──────────────────────────────────────────────
+exports.addInstallment = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const { label, amount, dueDate, isAdvance } = req.body;
+
+    if (!label || amount === undefined)
+      return res.status(400).json({ success: false, message: "label and amount are required" });
+
+    const invoice = await Invoice.findById(invoiceId);
+    if (!invoice)
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+
+    const before = invoice.toObject();
+
+    invoice.installments.push({
+      label,
+      amount:    Number(amount),
+      dueDate:   dueDate ? new Date(dueDate) : null,
+      isAdvance: isAdvance ?? false,
+      status:    "PENDING",
+      paidAmount: 0,
+    });
+
+    // Recalculate totalAmount
+    const newTotal = invoice.installments.reduce(
+      (sum, inst) => sum + (inst.amount || 0), 0
+    );
+    invoice.totalAmount     = newTotal;
+    invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
+
+    await invoice.save();
+
+    await logAudit({
+      req,
+      action: "INSTALLMENT_ADDED",
+      module: "finance",
+      targetId: invoice._id,
+      before,
+      after: invoice.toObject(),
+    });
+
+    res.json({ success: true, message: "Installment added", data: invoice });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 
 // UPDATE INVOICE

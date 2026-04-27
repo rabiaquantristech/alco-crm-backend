@@ -9,6 +9,8 @@ const {
   getInvoiceById,
   markInvoicePaid,
   markInstallmentPaid,
+  updateInstallment,
+  addInstallment,
   updateInvoice,
   addPayment,
   getAllPayments,
@@ -42,6 +44,19 @@ router.get("/invoices/:id", protect, authorize("finance_manager", "admin", "supe
 router.patch("/invoices/:id", protect, authorize("finance_manager", "admin", "super_admin"), updateInvoice);
 router.patch("/invoices/:id/mark-paid", protect, authorize("finance_manager", "admin", "super_admin"), markInvoicePaid);
 router.patch("/invoices/:invoiceId/installments/:installmentId/mark-paid", protect, authorize("admin", "super_admin", "finance"), markInstallmentPaid);
+// financeRoutes.js
+router.patch(
+  "/invoices/:invoiceId/installments/:installmentId",
+  protect, authorize("admin", "super_admin", "finance"),
+  updateInstallment
+);
+
+router.post(
+  "/invoices/:invoiceId/installments",
+  protect, authorize("admin", "super_admin", "finance"),
+  addInstallment
+);
+
 
 // ─── PAYMENT ROUTES ───────────────────────────────────────────
 router.post("/payments", protect, authorize("finance_manager", "admin", "super_admin"), addPayment);
