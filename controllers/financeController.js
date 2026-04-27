@@ -117,6 +117,85 @@ exports.markInvoicePaid = async (req, res) => {
   }
 };
 
+// financeController.js mein add karo
+
+exports.markInstallmentPaid = async (req, res) => {
+  try {
+    const { invoiceId, installmentId } = req.params;
+
+    const invoice = await Invoice.findById(invoiceId);
+    if (!invoice)
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+
+    const installment = invoice.installments.id(installmentId);
+    if (!installment)
+      return res.status(404).json({ success: false, message: "Installment not found" });
+
+    if (installment.status === "PAID")
+      return res.status(400).json({ success: false, message: "Already paid" });
+
+    const before = invoice.toObject();
+
+    // ── Installment mark karo ────────────────────────────────
+    installment.status     = "PAID";
+    installment.paidAmount = installment.amount;
+
+    // ── Invoice totals recalculate karo ──────────────────────
+    const totalPaid = invoice.installments.reduce(
+      (sum, inst) => sum + (inst.status === "PAID" ? inst.amount : 0),
+      0
+    );
+    invoice.paidAmount      = totalPaid;
+    invoice.remainingAmount = Math.max(0, invoice.totalAmount - totalPaid);
+    invoice.status =
+      invoice.remainingAmount === 0
+        ? "PAID"
+        : totalPaid > 0
+          ? "PARTIAL"
+          : "PENDING";
+
+    await invoice.save();
+
+    // ── Advance pay hua? Enrollment ACTIVE karo ──────────────
+    let enrollmentActivated = false;
+    if (installment.isAdvance) {
+      await Enrollment.findByIdAndUpdate(invoice.enrollment, {
+        accessStatus: "ACTIVE",
+      });
+      enrollmentActivated = true;
+
+      await logAudit({
+        req,
+        action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
+        module: "finance",
+        targetId: invoice.enrollment,
+        after: { accessStatus: "ACTIVE" },
+      });
+    }
+
+    await logAudit({
+      req,
+      action: "INSTALLMENT_MARKED_PAID",
+      module: "finance",
+      targetId: invoice._id,
+      before,
+      after: invoice.toObject(),
+    });
+
+    res.json({
+      success: true,
+      message: enrollmentActivated
+        ? "Installment paid — Enrollment activated!"
+        : "Installment marked as paid",
+      data: invoice,
+      enrollmentActivated,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 // UPDATE INVOICE
 exports.updateInvoice = async (req, res) => {
   try {
