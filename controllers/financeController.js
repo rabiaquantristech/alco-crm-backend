@@ -123,46 +123,48 @@ exports.markInstallmentPaid = async (req, res) => {
   try {
     const { invoiceId, installmentId } = req.params;
 
+    // Find the invoice by ID
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice)
       return res.status(404).json({ success: false, message: "Invoice not found" });
 
+    // Find the specified installment
     const installment = invoice.installments.id(installmentId);
     if (!installment)
       return res.status(404).json({ success: false, message: "Installment not found" });
 
+    // Check if the installment is already paid
     if (installment.status === "PAID")
       return res.status(400).json({ success: false, message: "Already paid" });
 
     const before = invoice.toObject();
 
-    // ── Installment mark karo ────────────────────────────────
-    installment.status     = "PAID";
+    // Mark the installment as paid
+    installment.status = "PAID";
     installment.paidAmount = installment.amount;
 
-    // ── Invoice totals recalculate karo ──────────────────────
+    // Recalculate invoice totals
     const totalPaid = invoice.installments.reduce(
       (sum, inst) => sum + (inst.status === "PAID" ? inst.amount : 0),
       0
     );
-    invoice.paidAmount      = totalPaid;
+    invoice.paidAmount = totalPaid;
     invoice.remainingAmount = Math.max(0, invoice.totalAmount - totalPaid);
-    invoice.status =
-      invoice.remainingAmount === 0
-        ? "PAID"
-        : totalPaid > 0
-          ? "PARTIAL"
-          : "PENDING";
+    invoice.status = invoice.remainingAmount === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
 
     await invoice.save();
 
-    // ── Advance pay hua? Enrollment ACTIVE karo ──────────────
+    // Check if the installment is an advance payment and activate enrollment accordingly
     let enrollmentActivated = false;
     if (installment.isAdvance) {
-      await Enrollment.findByIdAndUpdate(invoice.enrollment, {
-        accessStatus: "ACTIVE",
-      });
-      enrollmentActivated = true;
+      const enrollment = await Enrollment.findById(invoice.enrollment);
+
+      // If the enrollment is found and is restricted, activate it
+      if (enrollment && enrollment.accessStatus === "RESTRICTED") {
+        enrollment.accessStatus = "ACTIVE";
+        await enrollment.save();
+        enrollmentActivated = true; // Set the flag to indicate activation
+      }
 
       await logAudit({
         req,
@@ -173,6 +175,7 @@ exports.markInstallmentPaid = async (req, res) => {
       });
     }
 
+    // Log the installment payment action
     await logAudit({
       req,
       action: "INSTALLMENT_MARKED_PAID",
@@ -182,11 +185,10 @@ exports.markInstallmentPaid = async (req, res) => {
       after: invoice.toObject(),
     });
 
+    // Respond with success message and data
     res.json({
       success: true,
-      message: enrollmentActivated
-        ? "Installment paid — Enrollment activated!"
-        : "Installment marked as paid",
+      message: enrollmentActivated ? "Installment paid — Enrollment activated!" : "Installment marked as paid",
       data: invoice,
       enrollmentActivated,
     });
