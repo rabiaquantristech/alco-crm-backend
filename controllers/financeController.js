@@ -244,6 +244,8 @@ exports.markInstallmentPaid = async (req, res) => {
       const hasOverdueInstallments = allInstallments.some(inst => inst.isOverdue);
       const allOtherInstallmentsPaid = allInstallments.every(inst => inst.isPaid || inst.isOverdue);
 
+      console.log(`Advance installment paid. Enrollment ${enrollment} ${invoice.enrollment} - hasOverdue: ${hasOverdueInstallments}, allOtherPaid: ${allOtherInstallmentsPaid}`);
+
       // Activate enrollment if current installment is advance and all other conditions are met
       if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments && allOtherInstallmentsPaid) {
         enrollment.accessStatus = "ACTIVE";
