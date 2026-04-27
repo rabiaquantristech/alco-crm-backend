@@ -44,7 +44,7 @@ const enrollmentSchema = new mongoose.Schema(
       ],
       default: "active",
     },
-
+    invoice: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
     // 🔐 ACCESS SYSTEM (NEW)
     accessStatus: {
       type: String,
