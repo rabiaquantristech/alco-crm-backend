@@ -2,7 +2,7 @@
 
 const Invoice = require("../models/invoiceModel.js");
 const Payment = require("../models/paymentModel.js");
-const Enrollment = require("../models/paymentModel.js");
+const Enrollment = require("../models/enrollmentModel.js");
 const logAudit = require("../utils/auditLogger.js");
 
 // ─────────────────────────────────────────────
@@ -232,25 +232,55 @@ exports.markInstallmentPaid = async (req, res) => {
 
     // Check if the installment is an advance payment and activate enrollment accordingly
     let enrollmentActivated = false;
+    // if (installment.isAdvance) {
+    //   const enrollment = await Enrollment.findById(invoice.enrollment);
+
+    //   // Check if all installments are either paid or overdue
+    //   const allInstallments = invoice.installments.map(inst => ({
+    //     isPaid: inst.status === "PAID",
+    //     isOverdue: inst.dueDate && new Date(inst.dueDate) < new Date() && inst.status !== "PAID"
+    //   }));
+
+    //   const hasOverdueInstallments = allInstallments.some(inst => inst.isOverdue);
+    //   const allOtherInstallmentsPaid = allInstallments.every(inst => inst.isPaid || inst.isOverdue);
+
+    //   console.log(`Advance installment paid. Enrollment ${enrollment} ${invoice.enrollment} - hasOverdue: ${hasOverdueInstallments}, allOtherPaid: ${allOtherInstallmentsPaid}`);
+
+    //   // Activate enrollment if current installment is advance and all other conditions are met
+    //   if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments && allOtherInstallmentsPaid) {
+    //     enrollment.accessStatus = "ACTIVE";
+    //     await enrollment.save();
+    //     enrollmentActivated = true; // Set the flag to indicate activation
+    //   }
+
+    //   await logAudit({
+    //     req,
+    //     action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
+    //     module: "finance",
+    //     targetId: invoice.enrollment,
+    //     after: { accessStatus: "ACTIVE" },
+    //   });
+    // }
+
     if (installment.isAdvance) {
       const enrollment = await Enrollment.findById(invoice.enrollment);
 
-      // Check if all installments are either paid or overdue
-      const allInstallments = invoice.installments.map(inst => ({
-        isPaid: inst.status === "PAID",
-        isOverdue: inst.dueDate && new Date(inst.dueDate) < new Date() && inst.status !== "PAID"
-      }));
+      // Sirf overdue installments check karo (future pending = ok)
+      const hasOverdueInstallments = invoice.installments.some(
+        inst =>
+          inst.status !== "PAID" &&
+          inst.dueDate &&
+          new Date(inst.dueDate) < new Date()
+      );
 
-      const hasOverdueInstallments = allInstallments.some(inst => inst.isOverdue);
-      const allOtherInstallmentsPaid = allInstallments.every(inst => inst.isPaid || inst.isOverdue);
+      console.log(
+        `Advance paid. Enrollment: ${invoice.enrollment} | hasOverdue: ${hasOverdueInstallments}`
+      );
 
-      console.log(`Advance installment paid. Enrollment ${enrollment} ${invoice.enrollment} - hasOverdue: ${hasOverdueInstallments}, allOtherPaid: ${allOtherInstallmentsPaid}`);
-
-      // Activate enrollment if current installment is advance and all other conditions are met
-      if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments && allOtherInstallmentsPaid) {
+      if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments) {
         enrollment.accessStatus = "ACTIVE";
         await enrollment.save();
-        enrollmentActivated = true; // Set the flag to indicate activation
+        enrollmentActivated = true;
       }
 
       await logAudit({
@@ -258,7 +288,7 @@ exports.markInstallmentPaid = async (req, res) => {
         action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
         module: "finance",
         targetId: invoice.enrollment,
-        after: { accessStatus: "ACTIVE" },
+        after: { accessStatus: enrollmentActivated ? "ACTIVE" : "RESTRICTED" },
       });
     }
 
@@ -303,7 +333,7 @@ exports.updateInstallment = async (req, res) => {
 
     const before = invoice.toObject();
 
-    if (label)   installment.label   = label;
+    if (label) installment.label = label;
     if (amount !== undefined) installment.amount = Number(amount);
     if (dueDate) installment.dueDate = new Date(dueDate);
 
@@ -311,7 +341,7 @@ exports.updateInstallment = async (req, res) => {
     const newTotal = invoice.installments.reduce(
       (sum, inst) => sum + (inst.amount || 0), 0
     );
-    invoice.totalAmount     = newTotal;
+    invoice.totalAmount = newTotal;
     invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
 
     await invoice.save();
@@ -348,10 +378,10 @@ exports.addInstallment = async (req, res) => {
 
     invoice.installments.push({
       label,
-      amount:    Number(amount),
-      dueDate:   dueDate ? new Date(dueDate) : null,
+      amount: Number(amount),
+      dueDate: dueDate ? new Date(dueDate) : null,
       isAdvance: isAdvance ?? false,
-      status:    "PENDING",
+      status: "PENDING",
       paidAmount: 0,
     });
 
@@ -359,7 +389,7 @@ exports.addInstallment = async (req, res) => {
     const newTotal = invoice.installments.reduce(
       (sum, inst) => sum + (inst.amount || 0), 0
     );
-    invoice.totalAmount     = newTotal;
+    invoice.totalAmount = newTotal;
     invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
 
     await invoice.save();
