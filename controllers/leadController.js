@@ -951,216 +951,232 @@ exports.assignLead = async (req, res) => {
 // };
 
 exports.convertLead = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id).populate("assigned_to", "name email");
-    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
-
-    if (!lead.paymentPlan) {
-      return res.status(400).json({
-        success: false,
-        message: "Pehle payment plan set karo",
-      });
-    }
-
-    // ── Step 1: Program fetch karo — SABSE PEHLE ─────────────
-    const program = await Program.findById(lead.program_id).select("name");
-    // Ab program poore function mein available hai
-
-    // ── Step 2: Lead convert ──────────────────────────────────
-    lead.status = "converted";
-    await lead.save();
-
-    // ── Step 3: User banao ────────────────────────────────────
-    const crypto = require("crypto");
-    const tempPassword = crypto.randomBytes(8).toString("hex");
-    let user = await User.findOne({ email: lead.email });
-    let isNewUser = false;
-
-    if (!user) {
-      isNewUser = true;
-      user = await User.create({
-        name: `${lead.first_name} ${lead.last_name}`,
-        email: lead.email,
-        phone: lead.phone,
-        role: "student",
-        password: tempPassword,
-      });
-    }
-
-    // ── Step 4: Enrollment banao ──────────────────────────────
-    const enrollment = await Enrollment.create({
-      user: user._id,
-      program: lead.program_id,
-      batch: lead.batch_id,
-      status: "active",
-      accessStatus: "RESTRICTED",
-    });
-
-    // ── Step 5: Invoice Number generate karo ─────────────────
-    const count = await Invoice.countDocuments();
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
-
-    // ── Step 6: Invoice banao ─────────────────────────────────
-    const { totalAmount, advanceAmount, advanceDueDate, installments } = lead.paymentPlan;
-
-    const allInstallments = [
-      {
-        label: "Advance Payment",
-        amount: advanceAmount,
-        dueDate: advanceDueDate,
-        status: "PENDING",
-        paidAmount: 0,
-        isAdvance: true,
-      },
-      ...installments.map((inst) => ({
-        label: inst.label || "Installment",
-        amount: inst.amount,
-        dueDate: inst.dueDate,
-        status: "PENDING",
-        paidAmount: 0,
-        isAdvance: false,
-      })),
-    ];
-
-    const invoice = await Invoice.create({
-      invoiceNumber,
-      user: user._id,
-      enrollment: enrollment._id,
-      totalAmount,
-      remainingAmount: totalAmount,
-      paidAmount: 0,
-      dueDate: advanceDueDate,
-      installments: allInstallments,
-      notes: lead.paymentPlan.notes || "",
-      status: "PENDING",
-    });
-
-    // ── Step 7: Enrollment pe invoice link ───────────────────
-    await Enrollment.findByIdAndUpdate(enrollment._id, {
-      invoice: invoice._id,
-    });
-
-    // ── Step 8: Email helpers ─────────────────────────────────
-    const formatDate = (d) =>
-      d
-        ? new Date(d).toLocaleDateString("en-PK", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
-        : "—";
-
-    const formatAmount = (n) => Number(n || 0).toLocaleString("en-PK");
-
-    // ── Step 9: Installment rows HTML ─────────────────────────
-    const installmentRows = invoice.installments
-      .map((inst, i) => {
-        const isAdv = inst.isAdvance;
-        const statusClass = inst.status === "PAID" ? "paid" : "";
-        return `
-          <tr class="${isAdv ? "advance-row" : ""}">
-            <td class="td-num">${String(i + 1).padStart(2, "0")}</td>
-            <td class="td-desc">
-              ${isAdv
-                ? `Advance Payment <span class="badge-advance">Advance</span>`
-                : inst.label || `Installment ${i + 1}`}
-              <small>${isAdv ? "Required to activate enrollment" : "Monthly installment"}</small>
-            </td>
-            <td class="td-date">${formatDate(inst.dueDate)}</td>
-            <td><span class="inst-status ${statusClass}">${inst.status}</span></td>
-            <td class="td-amount">Rs ${formatAmount(inst.amount)}</td>
-          </tr>`;
-      })
-      .join("");
-
-    // ── Step 10: Invoice Email ────────────────────────────────
     try {
-      await sendEmailDynamic({
-        to: user.email,
-        subject: `Your Enrollment Invoice ${invoice.invoiceNumber} | ALCO`,
-        templateName: "generate-invoice",
-        replacements: {
-          invoiceNumber:     invoice.invoiceNumber,
-          invoiceStatus:     invoice.status,
-          issueDate:         formatDate(new Date()),
-          advanceDueDate:    formatDate(invoice.dueDate),
-          enrollmentId:
-            enrollment._id.toString().slice(0, 8) +
-            "..." +
-            enrollment._id.toString().slice(-4),
+        const lead = await Lead.findById(req.params.id).populate("assigned_to", "name email");
+        if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
-          studentName:       user.name,
-          studentEmail:      user.email,
-          studentPhone:      user.phone || "—",
-          studentProfession: lead.profession || "—",
+        if (!lead.paymentPlan) {
+            return res.status(400).json({
+                success: false,
+                message: "Pehle payment plan set karo",
+            });
+        }
 
-          salesManagerName:  lead.assigned_to?.name  || "Sales Team",
-          salesManagerEmail: lead.assigned_to?.email || "sales@alco.com",
+        // ── Step 1: Program fetch karo — SABSE PEHLE ─────────────
+        const program = await Program.findById(lead.program_id).select("name");
+        // Ab program poore function mein available hai
 
-          // ← program ab defined hai — koi error nahi
-          programName: program?.name || "NLP Program",
-          planNotes:   lead.paymentPlan.notes || "",
+        // ── Step 2: Lead convert ──────────────────────────────────
+        lead.status = "converted";
+        await lead.save();
 
-          installmentRows,
+        // ── Step 3: User banao ────────────────────────────────────
+        const crypto = require("crypto");
+        const tempPassword = crypto.randomBytes(8).toString("hex");
+        let user = await User.findOne({ email: lead.email });
+        let isNewUser = false;
 
-          totalAmount:     formatAmount(invoice.totalAmount),
-          paidAmount:      formatAmount(invoice.paidAmount || 0),
-          remainingAmount: formatAmount(invoice.remainingAmount || invoice.totalAmount),
-          advanceAmount:   formatAmount(
-            invoice.installments.find((i) => i.isAdvance)?.amount || 0
-          ),
-        },
-      });
+        if (!user) {
+            isNewUser = true;
+            user = await User.create({
+                name: `${lead.first_name} ${lead.last_name}`,
+                email: lead.email,
+                phone: lead.phone,
+                role: "student",
+                password: tempPassword,
+            });
+        }
 
-      console.log("Invoice email sent to:", user.email);
-    } catch (emailErr) {
-      console.error("Invoice email failed:", emailErr.message);
-    }
-
-    // ── Step 11: Credentials Email (new user) ─────────────────
-    if (isNewUser) {
-      try {
-        await sendEmailDynamic({
-          to: user.email,
-          subject: "Your Login Credentials | ALCO",
-          templateName: "send-user-credentials",
-          replacements: {
-            userName:  user.name,
-            userEmail: user.email,
-            password:  tempPassword,
-          },
+        // ── Step 4: Enrollment banao ──────────────────────────────
+        const enrollment = await Enrollment.create({
+            user: user._id,
+            program: lead.program_id,
+            batch: lead.batch_id,
+            status: "active",
+            accessStatus: "RESTRICTED",
         });
-      } catch (credErr) {
-        console.error("Credentials email failed:", credErr.message);
-      }
+
+        // ── Step 5: Invoice Number generate karo ─────────────────
+        const count = await Invoice.countDocuments();
+        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+
+        // ── Step 6: Invoice banao ─────────────────────────────────
+        const { totalAmount, advanceAmount, advanceDueDate, installments } = lead.paymentPlan;
+
+        const allInstallments = [
+            {
+                label: "Advance Payment",
+                amount: advanceAmount,
+                dueDate: advanceDueDate,
+                status: "PENDING",
+                paidAmount: 0,
+                isAdvance: true,
+            },
+            ...installments.map((inst) => ({
+                label: inst.label || "Installment",
+                amount: inst.amount,
+                dueDate: inst.dueDate,
+                status: "PENDING",
+                paidAmount: 0,
+                isAdvance: false,
+            })),
+        ];
+
+        const invoice = await Invoice.create({
+            invoiceNumber,
+            user: user._id,
+            enrollment: enrollment._id,
+            totalAmount,
+            remainingAmount: totalAmount,
+            paidAmount: 0,
+            dueDate: advanceDueDate,
+            installments: allInstallments,
+            notes: lead.paymentPlan.notes || "",
+            status: "PENDING",
+        });
+
+        // ── Step 7: Enrollment pe invoice link ───────────────────
+        await Enrollment.findByIdAndUpdate(enrollment._id, {
+            invoice: invoice._id,
+        });
+
+        // ── Step 8: Email helpers ─────────────────────────────────
+        const formatDate = (d) =>
+            d
+                ? new Date(d).toLocaleDateString("en-PK", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                })
+                : "—";
+
+        const formatAmount = (n) => Number(n || 0).toLocaleString("en-PK");
+
+        // ── Step 9: Installment rows HTML ─────────────────────────
+        const installmentRows = invoice.installments
+            .map((inst, i) => {
+                const isAdv = inst.isAdvance;
+                const isPaid = inst.status === "PAID";
+
+                return `
+      <tr style="background:${isAdv ? "#fdf6e3" : "#ffffff"}; border-bottom:1px solid #dde2ec;">
+        <td style="padding:13px 16px; font-family:'Courier New',monospace; font-size:11px; font-weight:600; color:#8a92a6; width:40px;">
+          ${String(i + 1).padStart(2, "0")}
+        </td>
+        <td style="padding:13px 16px; font-size:13px; color:#0f1117;">
+          <span style="font-weight:700;">
+            ${isAdv ? "Advance Payment" : inst.label || `Installment ${i + 1}`}
+          </span>
+          ${isAdv ? `<span style="display:inline-block; background:#c8a84b; color:#5a3a00; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:2px 8px; border-radius:4px; margin-left:7px;">Advance</span>` : ""}
+          <span style="display:block; font-size:10.5px; font-weight:400; color:#8a92a6; margin-top:2px;">
+            ${isAdv ? "Required to activate enrollment" : "Monthly installment"}
+          </span>
+        </td>
+        <td style="padding:13px 16px; font-family:'Courier New',monospace; font-size:11.5px; color:#4a5060;">
+          ${formatDate(inst.dueDate)}
+        </td>
+        <td style="padding:13px 16px;">
+          <span style="display:inline-block; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:3px 9px; border-radius:5px;
+            background:${isPaid ? "#eafaf3" : "#fff8e8"};
+            color:${isPaid ? "#1a8a57" : "#b07800"};">
+            ${inst.status}
+          </span>
+        </td>
+        <td style="padding:13px 16px; text-align:right; font-family:'Courier New',monospace; font-weight:600; font-size:13px; color:#0f1117;">
+          Rs ${formatAmount(inst.amount)}
+        </td>
+      </tr>`;
+            })
+            .join("");
+
+
+        // ── Step 10: Invoice Email ────────────────────────────────
+        try {
+            await sendEmailDynamic({
+                to: user.email,
+                subject: `Your Enrollment Invoice ${invoice.invoiceNumber} | ALCO`,
+                templateName: "generate-invoice",
+                replacements: {
+                    invoiceNumber: invoice.invoiceNumber,
+                    invoiceStatus: invoice.status,
+                    issueDate: formatDate(new Date()),
+                    advanceDueDate: formatDate(invoice.dueDate),
+                    enrollmentId:
+                        enrollment._id.toString().slice(0, 8) +
+                        "..." +
+                        enrollment._id.toString().slice(-4),
+
+                    studentName: user.name,
+                    studentEmail: user.email,
+                    studentPhone: user.phone || "—",
+                    studentProfession: lead.profession || "—",
+
+                    salesManagerName: lead.assigned_to?.name || "Sales Team",
+                    salesManagerEmail: lead.assigned_to?.email || "sales@alco.com",
+
+                    programName: program?.name || "NLP Program",
+                    planNotes: lead.paymentPlan.notes || "",
+
+                    installmentRows,   // ← YEH UNCOMMENT KARO
+
+                    totalAmount: formatAmount(invoice.totalAmount),
+                    paidAmount: formatAmount(invoice.paidAmount || 0),
+                    remainingAmount: formatAmount(invoice.remainingAmount || invoice.totalAmount),
+                    advanceAmount: formatAmount(
+                        invoice.installments.find((i) => i.isAdvance)?.amount || 0
+                    ),
+                },
+            });
+
+            console.log("Invoice email sent to:", user.email);
+        } catch (emailErr) {
+            console.error("Invoice email failed:", emailErr.message);
+        }
+
+        // ── Step 11: Credentials Email (new user) ─────────────────
+        if (isNewUser) {
+            try {
+                await sendEmailDynamic({
+                    to: user.email,
+                    subject: "Your Login Credentials | ALCO",
+                    templateName: "send-user-credentials",
+                    replacements: {
+                        userName: user.name,
+                        userEmail: user.email,
+                        password: tempPassword,
+                    },
+                });
+            } catch (credErr) {
+                console.error("Credentials email failed:", credErr.message);
+            }
+        }
+
+        // ── Step 12: Audit Log ────────────────────────────────────
+        await logAudit({
+            req,
+            action: "LEAD_CONVERTED",
+            module: "leads",
+            targetId: lead._id,
+            after: {
+                enrollment: enrollment._id,
+                invoice: invoice._id,
+                user: user._id,
+            },
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Lead converted — invoice and credentials emailed",
+            data: {
+                user: { _id: user._id, name: user.name, email: user.email, isNewUser },
+                enrollment: { _id: enrollment._id, accessStatus: "RESTRICTED" },
+                invoice: { _id: invoice._id, invoiceNumber, totalAmount, status: "PENDING" },
+            },
+        });
+    } catch (err) {
+        console.error("convertLead error:", err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
-
-    // ── Step 12: Audit Log ────────────────────────────────────
-    await logAudit({
-      req,
-      action: "LEAD_CONVERTED",
-      module: "leads",
-      targetId: lead._id,
-      after: {
-        enrollment: enrollment._id,
-        invoice:    invoice._id,
-        user:       user._id,
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Lead converted — invoice and credentials emailed",
-      data: {
-        user:       { _id: user._id, name: user.name, email: user.email, isNewUser },
-        enrollment: { _id: enrollment._id, accessStatus: "RESTRICTED" },
-        invoice:    { _id: invoice._id, invoiceNumber, totalAmount, status: "PENDING" },
-      },
-    });
-  } catch (err) {
-    console.error("convertLead error:", err.message);
-    res.status(500).json({ success: false, message: err.message });
-  }
 };
 
 
