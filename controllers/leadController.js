@@ -1547,6 +1547,7 @@ exports.getMyContract = async (req, res) => {
             status: "interested", // sirf interested leads
         })
             .select("first_name last_name email phone program_name contractDetails paymentPlan status")
+            .populate("program_id", "name")
             .sort({ updatedAt: -1 }); // latest pehle
 
         if (!lead) {
