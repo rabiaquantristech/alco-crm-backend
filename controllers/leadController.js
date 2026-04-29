@@ -1541,6 +1541,32 @@ exports.submitContract = async (req, res) => {
   }
 };
 
+// ─── Get My Contract (user side) ─────────────────────────────
+exports.getMyContract = async (req, res) => {
+  try {
+    // req.user._id se lead dhundo jo is user ka ho
+    const lead = await Lead.findOne({ 
+      user_id: req.user._id,
+      status: "interested", // sirf interested leads
+    })
+    .select("first_name last_name email phone program_name contractDetails paymentPlan status")
+    .sort({ updatedAt: -1 }); // latest pehle
+
+    if (!lead) {
+      return res.status(200).json({ 
+        success: true, 
+        data: null,
+        message: "No contract found" 
+      });
+    }
+
+    res.status(200).json({ success: true, data: lead });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 
 // ─── 3. Update Payment Plan (admin) — notification bhi ───────
 exports.updatePaymentPlan = async (req, res) => {
