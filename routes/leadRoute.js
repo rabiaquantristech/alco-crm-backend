@@ -13,7 +13,10 @@ const {
   setLeadToLost,
   getActivities,
   addActivity,
-  getLeadsStats
+  getLeadsStats,
+  markInterested,
+  updatePaymentPlan,
+  submitContract,
 } = require("../controllers/leadController.js");
 
 const { protect } = require("../middlewares/authMiddleware.js");
@@ -53,5 +56,14 @@ router.get("/:id/activities", protect, authorize("super_admin", "admin", "sales_
 
 // ✅ Add Activity 
 router.post("/:id/activities", protect, authorize("super_admin", "admin", "sales_manager", "sales_rep"), addActivity);
+
+// ✅ Add Interested
+router.patch("/:id/interested",  protect, authorize("admin", "super_admin", "sales_manager", "sales_rep"), markInterested);
+
+// ✅ Update Payment Plan
+router.patch("/:id/payment-plan", protect, authorize("admin","super_admin","finance_manager"), updatePaymentPlan);
+
+// ✅ Submit Contract
+router.patch("/:id/contract",    protect, submitContract); // user khud call karega
 
 module.exports = router;

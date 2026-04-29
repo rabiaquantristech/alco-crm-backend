@@ -137,6 +137,39 @@ const leadSchema = new mongoose.Schema(
       createdAt: { type: Date, default: Date.now }
     },
 
+    contractDetails: {
+      // Auto-fill fields (lead se)
+      fullName: String,
+      email: String,
+      phone: String,
+      programName: String,
+
+      // User khud bharega
+      fatherHusbandName: String,
+      cnic: String,
+      bankAccountNumber: String,
+      currentAddress: String,
+      emergencyContactName: String,
+      occupation: String,
+
+      // Agreements (checkboxes)
+      participationAgreement: { type: Boolean, default: false },
+      photoVideoRelease: { type: Boolean, default: false },
+
+      // Signature
+      signatureType: { type: String, enum: ["draw", "type"], default: "draw" },
+      signatureData: String, // base64 (draw) ya text (type)
+
+      // Status
+      status: {
+        type: String,
+        enum: ["pending", "filled", "signed"],
+        default: "pending"
+      },
+      signedAt: Date,
+      submittedAt: Date,
+    },
+
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -195,6 +195,7 @@ exports.markInvoicePaid = async (req, res) => {
 //     res.status(500).json({ success: false, message: err.message });
 //   }
 // };
+
 exports.markInstallmentPaid = async (req, res) => {
   try {
     const { invoiceId, installmentId } = req.params;
@@ -936,6 +937,7 @@ exports.getMyInvoices = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 // const Enrollment = require("../models/enrollmentModel.js");
 
 // exports.addFinanceExtension = async (req, res) => {
