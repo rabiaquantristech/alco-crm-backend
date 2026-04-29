@@ -1453,7 +1453,7 @@ exports.markInterested = async (req, res) => {
                     replacements: {
                         UserName: user.name || lead.first_name,
                         ProgramName: lead.program_name || "the program",
-                        ContractLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
+                        ContractLink: `${process.env.BACKEND_BASE_URL}/dashboard/contract/${lead._id}`,
                         SupportEmail: "alco@support.com",
                         YourCompanyName: "Al-and-co",
                     },
@@ -1601,7 +1601,7 @@ exports.updatePaymentPlan = async (req, res) => {
                         TotalAmount: `Rs ${Number(req.body.totalAmount || 0).toLocaleString()}`,
                         AdvanceAmount: `Rs ${Number(req.body.advanceAmount || 0).toLocaleString()}`,
                         Installments: req.body.installments?.length || 0,
-                        DashboardLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
+                        DashboardLink: `${process.env.BACKEND_BASE_URL}/dashboard/contract/${lead._id}`,
                         SupportEmail: "alco@support.com",
                         YourCompanyName: "Al-and-co",
                     },
