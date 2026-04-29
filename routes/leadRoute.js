@@ -26,6 +26,7 @@ const { authorize } = require("../middlewares/roleMiddleware.js");
 // ✅ Public 
 router.post("/", createLead);
 
+// ✅ Public Contact Form
 router.post("/contact", createLeadContact);
 
 // ✅ Stats rout
@@ -68,6 +69,6 @@ router.patch("/:id/interested",  protect, authorize("admin", "super_admin", "sal
 router.patch("/:id/payment-plan", protect, authorize("admin","super_admin","finance_manager"), updatePaymentPlan);
 
 // ✅ Submit Contract
-router.patch("/:id/contract",    protect, submitContract); // user khud call karega
+router.patch("/:id/contract",  protect,  submitContract); // user khud call karega
 
 module.exports = router;

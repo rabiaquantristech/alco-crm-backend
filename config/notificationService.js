@@ -77,9 +77,36 @@ const notifyStatusChanged = ({ userId, leadName, leadId, newStatus, changedBy })
   });
 };
 
+// ── Payment plan set hone pe ─────────────────────────────────
+const notifyPaymentPlanSet = ({ userId, leadName, leadId, triggeredBy }) => {
+  return createNotification({
+    user_id: userId,
+    type: "payment_plan_set",
+    title: "Payment Plan Ready 💳",
+    message: `Your payment plan for "${leadName}" has been set. Please review it in your dashboard.`,
+    lead_id: leadId,
+    triggered_by: triggeredBy,
+  });
+};
+
+// ── Contract submit hone pe (admin ko) ──────────────────────
+const notifyContractSubmitted = ({ userId, leadName, leadId, triggeredBy }) => {
+  return createNotification({
+    user_id: userId,
+    type: "contract_submitted",
+    title: "Contract Signed ✅",
+    message: `${leadName} ne contract sign kar diya.`,
+    lead_id: leadId,
+    triggered_by: triggeredBy,
+  });
+};
+
+
 module.exports = {
   createNotification,
   notifyLeadAssigned,
   notifyActivityAdded,
   notifyStatusChanged,
+  notifyPaymentPlanSet,
+  notifyContractSubmitted,
 };

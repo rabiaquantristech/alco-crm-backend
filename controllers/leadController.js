@@ -6,7 +6,7 @@ const sendEmailDynamic = require("../utils/sendEmailDynamic.js");
 // const emailTemplate = require("../template/send-user-credentials.js");
 const User = require("../models/userModel.js");
 const generateColor = require("../utils/generateColor.js");
-const { notifyStatusChanged, createNotification, notifyLeadAssigned, notifyActivityAdded } = require("../config/notificationService.js");
+const { notifyStatusChanged, createNotification, notifyLeadAssigned, notifyActivityAdded, notifyPaymentPlanSet, notifyContractSubmitted } = require("../config/notificationService.js");
 const logAudit = require("../utils/auditLogger.js");
 const Enrollment = require("../models/enrollmentModel.js");
 const Invoice = require("../models/invoiceModel.js");
@@ -1405,218 +1405,213 @@ exports.addActivity = async (req, res) => {
 
 // ─── 1. Mark Lead as Interested ──────────────────────────────
 exports.markInterested = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
+    try {
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // Status update
-    lead.status = "interested";
+        // Status update
+        lead.status = "interested";
 
-    // Contract auto-fill (lead data se)
-    lead.contractDetails = {
-      fullName: `${lead.first_name} ${lead.last_name || ""}`.trim(),
-      email: lead.email,
-      phone: lead.phone || "",
-      programName: lead.program_name || "",
-      status: "pending",
-    };
+        // Contract auto-fill (lead data se)
+        lead.contractDetails = {
+            fullName: `${lead.first_name} ${lead.last_name || ""}`.trim(),
+            email: lead.email,
+            phone: lead.phone || "",
+            programName: lead.program_name || "",
+            status: "pending",
+        };
 
-    // Payment plan agar bheja hai to save karo
-    if (req.body.paymentPlan) {
-      lead.paymentPlan = {
-        ...req.body.paymentPlan,
-        createdBy: req.user._id,
-        createdAt: new Date(),
-      };
+        // Payment plan agar bheja hai to save karo
+        if (req.body.paymentPlan) {
+            lead.paymentPlan = {
+                ...req.body.paymentPlan,
+                createdBy: req.user._id,
+                createdAt: new Date(),
+            };
+        }
+
+        await lead.save();
+
+        // ── User ko notify karo ──────────────────────────────────
+        if (lead.user_id) {
+            // In-app notification
+            await notifyStatusChanged({
+                userId: lead.user_id.toString(),
+                leadName: `${lead.first_name} ${lead.last_name}`,
+                leadId: lead._id.toString(),
+                newStatus: "interested",
+                changedBy: req.user._id.toString(),
+            });
+
+            // Email
+            const user = await User.findById(lead.user_id).select("email name");
+            if (user?.email) {
+                await sendEmailDynamic({
+                    to: user.email,
+                    subject: "You've Been Shortlisted! Complete Your Contract 🎉",
+                    templateName: "lead-interested",
+                    replacements: {
+                        UserName: user.name || lead.first_name,
+                        ProgramName: lead.program_name || "the program",
+                        ContractLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
+                        SupportEmail: "alco@support.com",
+                        YourCompanyName: "Al-and-co",
+                    },
+                });
+            }
+        }
+
+        res.status(200).json({ success: true, data: lead });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-
-    await lead.save();
-
-    // ── User ko notify karo ──────────────────────────────────
-    if (lead.user_id) {
-      // In-app notification
-      await createNotification({
-        user_id: lead.user_id.toString(),
-        type: "lead_interested",
-        title: "You've been shortlisted! 🎉",
-        message: `Congratulations! You have been selected for ${lead.program_name || "the program"}. Please complete your contract to proceed.`,
-        lead_id: lead._id.toString(),
-        triggered_by: req.user._id.toString(),
-      });
-
-      // Email
-      const user = await User.findById(lead.user_id).select("email name");
-      if (user?.email) {
-        await sendEmailDynamic({
-          to: user.email,
-          subject: "You've Been Shortlisted! Complete Your Contract 🎉",
-          templateName: "lead-interested",
-          replacements: {
-            UserName: user.name || lead.first_name,
-            ProgramName: lead.program_name || "the program",
-            ContractLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
-            SupportEmail: "alco@support.com",
-            YourCompanyName: "Al-and-co",
-          },
-        });
-      }
-    }
-
-    res.status(200).json({ success: true, data: lead });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
 // ─── 2. Submit Contract (user side) ──────────────────────────
 exports.submitContract = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
+    try {
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    const {
-      fatherHusbandName,
-      cnic,
-      bankAccountNumber,
-      currentAddress,
-      emergencyContactName,
-      occupation,
-      participationAgreement,
-      photoVideoRelease,
-      signatureType,
-      signatureData,
-    } = req.body;
+        const {
+            fatherHusbandName,
+            cnic,
+            bankAccountNumber,
+            currentAddress,
+            emergencyContactName,
+            occupation,
+            participationAgreement,
+            photoVideoRelease,
+            signatureType,
+            signatureData,
+        } = req.body;
 
-    // Merge karo — auto-fill fields preserve hongi
-    lead.contractDetails = {
-      ...lead.contractDetails,
-      fatherHusbandName,
-      cnic,
-      bankAccountNumber,
-      currentAddress,
-      emergencyContactName,
-      occupation,
-      participationAgreement,
-      photoVideoRelease,
-      signatureType,
-      signatureData,
-      status: "signed",
-      signedAt: new Date(),
-      submittedAt: new Date(),
-    };
+        // Merge karo — auto-fill fields preserve hongi
+        lead.contractDetails = {
+            ...lead.contractDetails,
+            fatherHusbandName,
+            cnic,
+            bankAccountNumber,
+            currentAddress,
+            emergencyContactName,
+            occupation,
+            participationAgreement,
+            photoVideoRelease,
+            signatureType,
+            signatureData,
+            status: "signed",
+            signedAt: new Date(),
+            submittedAt: new Date(),
+        };
 
-    await lead.save();
+        await lead.save();
 
-    // ── Admin ko notify karo ─────────────────────────────────
-    if (lead.assigned_to) {
-      await createNotification({
-        user_id: lead.assigned_to.toString(),
-        type: "contract_signed",
-        title: "Contract Signed ✅",
-        message: `${lead.first_name} ${lead.last_name} ne contract sign kar diya.`,
-        lead_id: lead._id.toString(),
-        triggered_by: lead.user_id?.toString(),
-      });
+        // ── Admin ko notify karo ─────────────────────────────────
+        if (lead.assigned_to) {
+            await notifyContractSubmitted({
+                userId: lead.assigned_to.toString(),
+                leadName: `${lead.first_name} ${lead.last_name}`,
+                leadId: lead._id.toString(),
+                triggeredBy: lead.user_id?.toString(),
+            });
+        }
+
+        // ── User ko confirmation email ───────────────────────────
+        const user = await User.findById(lead.user_id).select("email name");
+        if (user?.email) {
+            await sendEmailDynamic({
+                to: user.email,
+                subject: "Contract Received — We'll Be in Touch Soon ✅",
+                templateName: "contract-submitted",
+                replacements: {
+                    UserName: user.name || lead.first_name,
+                    ProgramName: lead.program_name || "the program",
+                    SupportEmail: "alco@support.com",
+                    YourCompanyName: "Al-and-co",
+                },
+            });
+        }
+
+        res.status(200).json({ success: true, message: "Contract submitted!", data: lead });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-
-    // ── User ko confirmation email ───────────────────────────
-    const user = await User.findById(lead.user_id).select("email name");
-    if (user?.email) {
-      await sendEmailDynamic({
-        to: user.email,
-        subject: "Contract Received — We'll Be in Touch Soon ✅",
-        templateName: "contract-submitted",
-        replacements: {
-          UserName: user.name || lead.first_name,
-          ProgramName: lead.program_name || "the program",
-          SupportEmail: "alco@support.com",
-          YourCompanyName: "Al-and-co",
-        },
-      });
-    }
-
-    res.status(200).json({ success: true, message: "Contract submitted!", data: lead });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
 // ─── Get My Contract (user side) ─────────────────────────────
 exports.getMyContract = async (req, res) => {
-  try {
-    // req.user._id se lead dhundo jo is user ka ho
-    const lead = await Lead.findOne({ 
-      user_id: req.user._id,
-      status: "interested", // sirf interested leads
-    })
-    .select("first_name last_name email phone program_name contractDetails paymentPlan status")
-    .sort({ updatedAt: -1 }); // latest pehle
+    try {
+        // req.user._id se lead dhundo jo is user ka ho
+        const lead = await Lead.findOne({
+            user_id: req.user._id,
+            status: "interested", // sirf interested leads
+        })
+            .select("first_name last_name email phone program_name contractDetails paymentPlan status")
+            .sort({ updatedAt: -1 }); // latest pehle
 
-    if (!lead) {
-      return res.status(200).json({ 
-        success: true, 
-        data: null,
-        message: "No contract found" 
-      });
+        if (!lead) {
+            return res.status(200).json({
+                success: true,
+                data: null,
+                message: "No contract found"
+            });
+        }
+
+        res.status(200).json({ success: true, data: lead });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-
-    res.status(200).json({ success: true, data: lead });
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
 
 // ─── 3. Update Payment Plan (admin) — notification bhi ───────
 exports.updatePaymentPlan = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
+    try {
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    lead.paymentPlan = {
-      ...req.body,
-      createdBy: req.user._id,
-      createdAt: new Date(),
-    };
+        lead.paymentPlan = {
+            ...req.body,
+            createdBy: req.user._id,
+            createdAt: new Date(),
+        };
 
-    await lead.save();
+        await lead.save();
 
-    // ── User ko notify karo ──────────────────────────────────
-    if (lead.user_id) {
-      await createNotification({
-        user_id: lead.user_id.toString(),
-        type: "payment_plan_updated",
-        title: "Payment Plan Ready 💳",
-        message: `Your payment plan for ${lead.program_name || "the program"} has been set. Please review it in your dashboard.`,
-        lead_id: lead._id.toString(),
-        triggered_by: req.user._id.toString(),
-      });
+        // ── User ko notify karo ──────────────────────────────────
+        if (lead.user_id) {
+            await notifyPaymentPlanSet({
+                userId: lead.user_id.toString(),
+                leadName: `${lead.first_name} ${lead.last_name}`,
+                leadId: lead._id.toString(),
+                triggeredBy: req.user._id.toString(),
+            });
 
-      const user = await User.findById(lead.user_id).select("email name");
-      if (user?.email) {
-        await sendEmailDynamic({
-          to: user.email,
-          subject: "Your Payment Plan is Ready 💳",
-          templateName: "payment-plan-updated",
-          replacements: {
-            UserName: user.name || lead.first_name,
-            ProgramName: lead.program_name || "the program",
-            TotalAmount: `Rs ${Number(req.body.totalAmount || 0).toLocaleString()}`,
-            AdvanceAmount: `Rs ${Number(req.body.advanceAmount || 0).toLocaleString()}`,
-            Installments: req.body.installments?.length || 0,
-            DashboardLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
-            SupportEmail: "alco@support.com",
-            YourCompanyName: "Al-and-co",
-          },
-        });
-      }
+            const user = await User.findById(lead.user_id).select("email name");
+            if (user?.email) {
+                await sendEmailDynamic({
+                    to: user.email,
+                    subject: "Your Payment Plan is Ready 💳",
+                    templateName: "payment-plan-updated",
+                    replacements: {
+                        UserName: user.name || lead.first_name,
+                        ProgramName: lead.program_name || "the program",
+                        TotalAmount: `Rs ${Number(req.body.totalAmount || 0).toLocaleString()}`,
+                        AdvanceAmount: `Rs ${Number(req.body.advanceAmount || 0).toLocaleString()}`,
+                        Installments: req.body.installments?.length || 0,
+                        DashboardLink: `${process.env.FRONTEND_URL}/dashboard/contract/${lead._id}`,
+                        SupportEmail: "alco@support.com",
+                        YourCompanyName: "Al-and-co",
+                    },
+                });
+            }
+        }
+
+        res.status(200).json({ success: true, data: lead });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-
-    res.status(200).json({ success: true, data: lead });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
 exports.getLeadsStats = async (req, res) => {
