@@ -111,7 +111,7 @@ router.post("/", protect, authorize("admin", "super_admin"), adminCreateProgram)
 router.post("/:id/duplicate", protect, authorize("admin", "super_admin"), adminDuplicateProgram);
 
 // ── ADMIN — Batches ──
-router.get("/batches", protect, authorize("admin", "super_admin"), adminGetBatches);
+router.get("/batches", protect, authorize("admin", "super_admin", "sales_manager", "sales_rep"), adminGetBatches);
 router.post("/batches", protect, authorize("admin", "super_admin"), adminCreateBatch);
 router.put("/batches/:id", protect, authorize("admin", "super_admin"), adminUpdateBatch);
 router.delete("/batches/:id", protect, authorize("admin", "super_admin"), adminDeleteBatch);
