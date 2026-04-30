@@ -42,17 +42,17 @@ router.get("/invoices/upcoming-dues", protect, authorize("finance_manager", "adm
 router.get("/invoices/:id", protect, authorize("finance_manager", "admin", "super_admin"), getInvoiceById);
 router.patch("/invoices/:id", protect, authorize("finance_manager", "admin", "super_admin"), updateInvoice);
 router.patch("/invoices/:id/mark-paid", protect, authorize("finance_manager", "admin", "super_admin"), markInvoicePaid);
-router.patch("/invoices/:invoiceId/installments/:installmentId/mark-paid", protect, authorize("admin", "super_admin", "finance"), markInstallmentPaid);
+router.patch("/invoices/:invoiceId/installments/:installmentId/mark-paid", protect, authorize("admin", "super_admin", "finance_manager"), markInstallmentPaid);
 // financeRoutes.js
 router.patch(
   "/invoices/:invoiceId/installments/:installmentId",
-  protect, authorize("admin", "super_admin", "finance"),
+  protect, authorize("admin", "super_admin", "finance_manager"),
   updateInstallment
 );
 
 router.post(
   "/invoices/:invoiceId/installments",
-  protect, authorize("admin", "super_admin", "finance"),
+  protect, authorize("admin", "super_admin", "finance_manager"),
   addInstallment
 );
 

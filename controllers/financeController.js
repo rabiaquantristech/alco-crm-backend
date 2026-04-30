@@ -34,7 +34,7 @@ exports.createInvoice = async (req, res) => {
     await logAudit({
       req,
       action: "INVOICE_CREATED",
-      module: "finance",
+      module: "finance_manager",
       targetId: invoice._id,
       after: invoice.toObject(),
     });
@@ -105,7 +105,7 @@ exports.markInvoicePaid = async (req, res) => {
     await logAudit({
       req,
       action: "INVOICE_MARKED_PAID",
-      module: "finance",
+      module: "finance_manager",
       targetId: invoice._id,
       before,
       after: invoice.toObject(),
@@ -168,7 +168,7 @@ exports.markInvoicePaid = async (req, res) => {
 //       await logAudit({
 //         req,
 //         action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
-//         module: "finance",
+//         module: "finance_manager",
 //         targetId: invoice.enrollment,
 //         after: { accessStatus: "ACTIVE" },
 //       });
@@ -178,7 +178,7 @@ exports.markInvoicePaid = async (req, res) => {
 //     await logAudit({
 //       req,
 //       action: "INSTALLMENT_MARKED_PAID",
-//       module: "finance",
+//       module: "finance_manager",
 //       targetId: invoice._id,
 //       before,
 //       after: invoice.toObject(),
@@ -257,7 +257,7 @@ exports.markInstallmentPaid = async (req, res) => {
     //   await logAudit({
     //     req,
     //     action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
-    //     module: "finance",
+    //     module: "finance_manager",
     //     targetId: invoice.enrollment,
     //     after: { accessStatus: "ACTIVE" },
     //   });
@@ -287,7 +287,7 @@ exports.markInstallmentPaid = async (req, res) => {
       await logAudit({
         req,
         action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
-        module: "finance",
+        module: "finance_manager",
         targetId: invoice.enrollment,
         after: { accessStatus: enrollmentActivated ? "ACTIVE" : "RESTRICTED" },
       });
@@ -297,7 +297,7 @@ exports.markInstallmentPaid = async (req, res) => {
     await logAudit({
       req,
       action: "INSTALLMENT_MARKED_PAID",
-      module: "finance",
+      module: "finance_manager",
       targetId: invoice._id,
       before,
       after: invoice.toObject(),
@@ -350,7 +350,7 @@ exports.updateInstallment = async (req, res) => {
     await logAudit({
       req,
       action: "INSTALLMENT_UPDATED",
-      module: "finance",
+      module: "finance_manager",
       targetId: invoice._id,
       before,
       after: invoice.toObject(),
@@ -398,7 +398,7 @@ exports.addInstallment = async (req, res) => {
     await logAudit({
       req,
       action: "INSTALLMENT_ADDED",
-      module: "finance",
+      module: "finance_manager",
       targetId: invoice._id,
       before,
       after: invoice.toObject(),
@@ -423,7 +423,7 @@ exports.updateInvoice = async (req, res) => {
     await logAudit({
       req,
       action: "INVOICE_UPDATED",
-      module: "finance",
+      module: "finance_manager",
       targetId: updated._id,
       before,
       after: updated.toObject(),
@@ -463,7 +463,7 @@ exports.addPayment = async (req, res) => {
     await logAudit({
       req,
       action: "PAYMENT_ADDED",
-      module: "finance",
+      module: "finance_manager",
       targetId: payment._id,
       after: payment.toObject(),
     });
@@ -548,7 +548,7 @@ exports.getPaymentById = async (req, res) => {
 //     await logAudit({
 //       req,
 //       action: "PAYMENT_APPROVED",
-//       module: "finance",
+//       module: "finance_manager",
 //       targetId: payment._id,
 //       before,
 //       after: payment.toObject(),
@@ -625,7 +625,7 @@ exports.approvePayment = async (req, res) => {
         await logAudit({
           req,
           action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
-          module: "finance",
+          module: "finance_manager",
           targetId: invoice.enrollment,
           after: { accessStatus: "ACTIVE", paidBy: payment.user },
         });
@@ -635,7 +635,7 @@ exports.approvePayment = async (req, res) => {
     await logAudit({
       req,
       action: "PAYMENT_APPROVED",
-      module: "finance",
+      module: "finance_manager",
       targetId: payment._id,
       before,
       after: payment.toObject(),
@@ -674,7 +674,7 @@ exports.rejectPayment = async (req, res) => {
     await logAudit({
       req,
       action: "PAYMENT_REJECTED",
-      module: "finance",
+      module: "finance_manager",
       targetId: payment._id,
       before,
       after: payment.toObject(),
@@ -701,7 +701,7 @@ exports.updatePayment = async (req, res) => {
     await logAudit({
       req,
       action: "PAYMENT_UPDATED",
-      module: "finance",
+      module: "finance_manager",
       targetId: updated._id,
       before,
       after: updated.toObject(),
@@ -800,7 +800,7 @@ exports.addFinanceExtension = async (req, res) => {
     await logAudit({
       req,
       action: "FINANCE_EXTENSION_ADDED",
-      module: "finance",
+      module: "finance_manager",
       targetId: enrollmentId,
       before,
       after: enrollment.toObject(),
