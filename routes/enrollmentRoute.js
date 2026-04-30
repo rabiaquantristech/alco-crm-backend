@@ -23,7 +23,7 @@ router.get("/my", protect, getMyEnrollments);
 // ADMIN
 router.post("/", protect, authorize("admin", "super_admin"), createEnrollment);
 
-router.get("/", protect, authorize("admin", "super_admin"), getAllEnrollments);
+router.get("/", protect, authorize("admin", "super_admin", "sales_rep", "sales_manager", "finance_manager"), getAllEnrollments);
 
 router.get("/:id", protect, getEnrollmentById);
 
