@@ -25,7 +25,7 @@ module.exports = `<!DOCTYPE html>
                   <!-- <td style="font-size:15px; font-weight:600; color:#ffffff;">{{YourCompanyName}}</td> -->
                   <div style="display: flex; align-items:flex-start; justify-content: space-between;">
                     <div>
-                      <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/v1777543091/logo-white_xg7uyj.webp" alt="Arslan Larik & Company"
+                      <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/h_110,q_100,f_auto/v1777543091/logo-white_xg7uyj.webp" alt="Arslan Larik & Company"
                         style="height:55px;width:auto;display:block;" />
                       <p style="font-size:18px; font-weight:600; color:#ffffff; text-align: left; line-height: 2px;">
                         New activity on your request
@@ -130,7 +130,7 @@ module.exports = `<!DOCTYPE html>
           <!-- FOOTER -->
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
-              <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/v1777543090/logo_gx6cud.webp" alt="Arslan Larik & Company"
+              <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/h_80,q_100,f_auto/v1777543090/logo_gx6cud.webp" alt="Arslan Larik & Company"
                 style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
               <p style="margin:0;font-size:12px;color:#9ca3af;">Questions? Contact us at <a
                   href="mailto:{{SupportEmail}}" style="color:#EF9F27;text-decoration:none;">{{SupportEmail}}</a></p>
