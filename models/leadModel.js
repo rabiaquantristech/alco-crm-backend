@@ -47,6 +47,12 @@ const leadSchema = new mongoose.Schema(
       default: null,
     },
 
+    batch_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
+      default: null,
+    },
+
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
