@@ -11,29 +11,31 @@ module.exports = `
 <div style="width:100%;max-width:860px;margin:0 auto;background:#ffffff;">
 
   <!-- HEADER -->
-  <div style="background:#1a3a5c;padding:36px 44px 30px;display:flex;align-items:flex-start;justify-content:space-between;">
+  <div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:36px 44px 30px;display:flex;align-items:flex-start;justify-content:space-between;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="vertical-align:top;">
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="vertical-align:middle;">
-                <div style="width:44px;height:44px;background:#c8a84b;border-radius:10px;text-align:center;line-height:44px;font-size:16px;font-weight:800;color:#1a3a5c;display:inline-block;">AL</div>
+                <div style="width:64px;height:64px;background:rgba(200,168,75,0.15);border:2px solid #c8a84b;border-radius:10px;margin:0 auto 20px;line-height:64px;text-align:center;font-size:18px; color:#c8a84b">ALCO</div>
+                <!-- <div style="width:44px;height:44px;background:#c8a84b;border-radius:10px;text-align:center;line-height:44px;font-size:16px;font-weight:800;color:#1a3a5c;display:inline-block;">AL</div> -->
               </td>
-              <td style="vertical-align:middle;padding-left:12px;">
-                <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;line-height:1;">ALCO</div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.55);font-weight:400;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Academy of Life Coaching</div>
+              <td style="vertical-align:middle;padding-left:12px;display:flex;flex-direction:column;align-items:flex-start; gap: 4px;">
+                <!-- <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;line-height:1;">ALCO</div> -->
+              <img src="../assets/logo-white.webp" alt="Arslan Larik & Company" style="height:40px;width:auto;display:block;" />
+                <div style="font-size:11px;color:#94a3b8;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Academy of Life Coaching</div>
               </td>
             </tr>
           </table>
-          <div style="font-size:11.5px;color:rgba(255,255,255,0.60);line-height:1.7;margin-top:14px;">
+          <div style="font-size:11.5px;color:#94a3b8;line-height:1.7;margin-top:14px;">
             Karachi, Pakistan<br/>
             info@alco.com &nbsp;|&nbsp; +92 300 0000000<br/>
             www.alco.com
           </div>
         </td>
         <td style="vertical-align:top;text-align:right;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.50);margin-bottom:6px;">Invoice Number</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">Invoice Number</div>
           <div style="font-family:'Courier New',monospace;font-size:26px;font-weight:600;color:#ffffff;">{{invoiceNumber}}</div>
           <div style="display:inline-block;margin-top:10px;padding:5px 14px;border-radius:50px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:#fff8e8;color:#b07800;">{{invoiceStatus}}</div>
         </td>
@@ -105,7 +107,7 @@ module.exports = `
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="width:36px;vertical-align:middle;">
-            <div style="width:36px;height:36px;background:#1a3a5c;border-radius:9px;text-align:center;line-height:36px;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);border-radius:9px;text-align:center;line-height:36px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
               </svg>
@@ -127,12 +129,12 @@ module.exports = `
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#8a92a6;margin-bottom:12px;">Payment Schedule</div>
       <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dde2ec;border-radius:12px;overflow:hidden;border-collapse:collapse;">
         <thead>
-          <tr style="background:#1a3a5c;">
-            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.75);width:40px;">#</th>
-            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Description</th>
-            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Due Date</th>
-            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Status</th>
-            <th style="padding:12px 16px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.75);">Amount</th>
+          <tr style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);">
+            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;width:40px;">#</th>
+            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;">Description</th>
+            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;">Due Date</th>
+            <th style="padding:12px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;">Status</th>
+            <th style="padding:12px 16px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -159,8 +161,8 @@ module.exports = `
               <td style="padding:11px 18px;font-size:13px;color:#4a5060;font-weight:500;">Outstanding Balance</td>
               <td style="padding:11px 18px;text-align:right;font-family:'Courier New',monospace;font-weight:600;color:#c94040;font-size:13px;">Rs {{remainingAmount}}</td>
             </tr>
-            <tr style="background:#1a3a5c;">
-              <td style="padding:11px 18px;font-size:14px;color:rgba(255,255,255,0.7);font-weight:600;">Total Invoice Amount</td>
+            <tr style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);">
+              <td style="padding:11px 18px;font-size:14px;color:#94a3b8;font-weight:600;">Total Invoice Amount</td>
               <td style="padding:11px 18px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#ffffff;font-size:15px;">Rs {{totalAmount}}</td>
             </tr>
           </table>

@@ -18,22 +18,31 @@ module.exports = `<!DOCTYPE html>
 
           <!-- HEADER -->
           <tr>
-            <td style="padding:28px 32px 20px; border-bottom:1px solid #e2e8f0;">
+            <td
+              style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:20px 20px 10px;text-align:center;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="font-size:15px; font-weight:600; color:#1a202c;">{{YourCompanyName}}</td>
-                  <td align="right">
-                    <span style="background:#EEF2FF; color:#3730a3; padding:4px 10px;
-                      border-radius:6px; font-size:11px; font-weight:600;">
-                      Activity Update
-                    </span>
-                  </td>
+                  <!-- <td style="font-size:15px; font-weight:600; color:#ffffff;">{{YourCompanyName}}</td> -->
+                  <div style="display: flex; align-items:flex-start; justify-content: space-between;">
+                    <div>
+                      <img src="../assets/logo-white.webp" alt="Arslan Larik & Company"
+                        style="height:55px;width:auto;display:block;" />
+                      <p style="font-size:18px; font-weight:600; color:#ffffff; text-align: left; line-height: 2px;">
+                        New activity on your request
+                      </p>
+                      <p style="font-size:13px; color:#94a3b8; text-align: left;">Our team took an action on your
+                        request</p>
+                    </div>
+                    <div style="margin: 5px 10px 0px 0px;">
+                      <span style="background:rgb(238, 242, 255, 0.75); color:#3730a3; padding:4px 10px;
+                      border-radius:6px; font-size:11px; font-weight:600; ">
+                        Activity Update
+                      </span>
+                    </div>
+                  </div>
                 </tr>
               </table>
-              <p style="font-size:18px; font-weight:600; color:#1a202c; margin:14px 0 4px;">
-                New activity on your request
-              </p>
-              <p style="font-size:13px; color:#718096; margin:0;">Our team took an action on your request</p>
+
             </td>
           </tr>
 
@@ -68,7 +77,8 @@ module.exports = `<!DOCTYPE html>
 
                 <!-- Title -->
                 <tr style="border-bottom:1px solid #e2e8f0;">
-                  <td width="35%" style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">
+                  <td width="35%"
+                    style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">
                     Title
                   </td>
                   <td style="padding:12px 16px; font-size:14px; color:#1a202c;">
@@ -93,7 +103,8 @@ module.exports = `<!DOCTYPE html>
 
                 <!-- Logged by -->
                 <tr>
-                  <td width="35%" style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">
+                  <td width="35%"
+                    style="padding:12px 16px; background:#f8fafc; font-size:12px; color:#718096; font-weight:600;">
                     Logged By
                   </td>
                   <td style="padding:12px 16px; font-size:14px; color:#1a202c;">
@@ -118,12 +129,11 @@ module.exports = `<!DOCTYPE html>
 
           <!-- FOOTER -->
           <tr>
-            <td style="padding:16px 32px; border-top:1px solid #e2e8f0;">
-              <p style="font-size:12px; color:#718096; margin:0;">
-                Questions? Contact us at
-                <a href="mailto:{{SupportEmail}}"
-                  style="color:#185FA5; text-decoration:none;">{{SupportEmail}}</a>
-              </p>
+            <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
+              <img src="../assets/logo.webp" alt="Arslan Larik & Company"
+                style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
+              <p style="margin:0;font-size:12px;color:#9ca3af;">Questions? Contact us at <a
+                  href="mailto:{{SupportEmail}}" style="color:#EF9F27;text-decoration:none;">{{SupportEmail}}</a></p>
             </td>
           </tr>
 
@@ -133,4 +143,5 @@ module.exports = `<!DOCTYPE html>
   </table>
 
 </body>
+
 </html>`;

@@ -15,7 +15,6 @@ module.exports = `<!DOCTYPE html>
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:40px 40px 30px;text-align:center;">
-              <p style="margin:0 0 16px;font-size:13px;color:#c8a84b;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">Arslan Larik & Company</p>
               <div style="width:64px;height:64px;background:rgba(200,168,75,0.15);border:2px solid #c8a84b;border-radius:50%;margin:0 auto 20px;line-height:64px;text-align:center;font-size:28px;">✅</div>
               <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Contract Received!</h1>
               <p style="margin:10px 0 0;font-size:14px;color:#94a3b8;">Thank you for completing your agreement</p>
@@ -145,9 +144,9 @@ module.exports = `<!DOCTYPE html>
           <!-- Footer -->
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#1a1a2e;">Arslan Larik & Company</p>
+              <img src="../assets/logo.webp" alt="Arslan Larik & Company" style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">Center for Human Brilliance & Behavioral Reengineering</p>
-              <p style="margin:0;font-size:12px;color:#9ca3af;">Questions? <a href="mailto:{{SupportEmail}}" style="color:#c8a84b;text-decoration:none;">{{SupportEmail}}</a></p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">Questions? Contact us at <a href="mailto:{{SupportEmail}}" style="color:#c8a84b;text-decoration:none;">{{SupportEmail}}</a></p>
             </td>
           </tr>
 
