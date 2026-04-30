@@ -19,7 +19,7 @@ module.exports = `<!DOCTYPE html>
             <td
               style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:30px 40px 30px;text-align:center; display: flex; flex-direction: column; align-items: center; position: relative;">
               <div style="position: absolute; top: 15px; left: 25px; z-index: 1;">
-                <img src="../assets/logo-white.webp" alt="Arslan Larik & Company"
+                <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/v1777543091/logo-white_xg7uyj.webp" alt="Arslan Larik & Company"
                   style="height:35px;width:auto;display:block;" />
               </div>
               <div
@@ -114,7 +114,7 @@ module.exports = `<!DOCTYPE html>
           <!-- Footer -->
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
-              <img src="../assets/logo.webp" alt="Arslan Larik & Company"
+              <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/v1777543090/logo_gx6cud.webp" alt="Arslan Larik & Company"
                 style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">Center for Human Brilliance & Behavioral
                 Reengineering</p>

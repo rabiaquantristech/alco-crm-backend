@@ -144,7 +144,7 @@ module.exports = `<!DOCTYPE html>
           <!-- Footer -->
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
-              <img src="../assets/logo.webp" alt="Arslan Larik & Company" style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
+              <img src="https://res.cloudinary.com/dmbpjv9e8/image/upload/v1777543090/logo_gx6cud.webp" alt="Arslan Larik & Company" style="height:40px;width:auto;display:block;margin:0 auto 8px;" />
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">Center for Human Brilliance & Behavioral Reengineering</p>
               <p style="margin:0;font-size:12px;color:#9ca3af;">Questions? Contact us at <a href="mailto:{{SupportEmail}}" style="color:#c8a84b;text-decoration:none;">{{SupportEmail}}</a></p>
             </td>
