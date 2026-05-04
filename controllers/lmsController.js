@@ -1,14 +1,14 @@
 // controllers/lmsController.js
-const Enrollment    = require("../models/enrollmentModel");
-const Course        = require("../models/courseModel");
-const Module        = require("../models/moduleModel");
-const Lesson        = require("../models/lessonModel");
+const Enrollment = require("../models/enrollmentModel");
+const Course = require("../models/courseModel");
+const Module = require("../models/moduleModel");
+const Lesson = require("../models/lessonModel");
 const LessonProgress = require("../models/lessonProgressModel");
 const LessonComment = require("../models/lessonCommentModel");
-const Assignment    = require("../models/assignmentModel");
-const Submission    = require("../models/submissionModel");
-const LiveSession   = require("../models/liveSessionModel");
-const Resource      = require("../models/resourceModel");
+const Assignment = require("../models/assignmentModel");
+const Submission = require("../models/submissionModel");
+const LiveSession = require("../models/liveSessionModel");
+const Resource = require("../models/resourceModel");
 
 // ─── Helper: enrollment verify karo ──────────────────────────
 async function verifyEnrollment(enrollmentId, userId) {
@@ -77,6 +77,18 @@ exports.getLearningDashboard = async (req, res) => {
     }).sort({ order: 1 });
 
     // Har course ka progress calculate karo
+    // const coursesWithProgress = await Promise.all(
+    //   courses.map(async (course) => {
+    //     const totalLessons = course.total_lessons || 0;
+    //     const completedLessons = await LessonProgress.countDocuments({
+    //       enrollment_id: enrollment._id,
+    //       course_id: course._id,
+    //       is_completed: true,
+    //     });
+    //     const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    //     return { ...course.toObject(), completed_lessons: completedLessons, progress_percentage: progressPct };
+    //   })
+    // );
     const coursesWithProgress = await Promise.all(
       courses.map(async (course) => {
         const totalLessons = course.total_lessons || 0;
@@ -86,13 +98,57 @@ exports.getLearningDashboard = async (req, res) => {
           is_completed: true,
         });
         const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-        return { ...course.toObject(), completed_lessons: completedLessons, progress_percentage: progressPct };
+
+        // ── Modules + Lessons fetch karo ──────────────────────────
+        const modules = await Module.find({ course_id: course._id }).sort({ order: 1 });
+
+        const modulesWithLessons = await Promise.all(
+          modules.map(async (mod) => {
+            const lessons = await Lesson.find({
+              module_id: mod._id,
+              status: "active",
+            }).sort({ order: 1 });
+
+            // Har lesson ka progress
+            const lessonsWithProgress = await Promise.all(
+              lessons.map(async (lesson) => {
+                const progress = await LessonProgress.findOne({
+                  enrollment_id: enrollment._id,
+                  lesson_id: lesson._id,
+                });
+                return {
+                  ...lesson.toObject(),
+                  is_completed: progress?.is_completed || false,
+                  progress_percentage: progress?.progress_percentage || 0,
+                  last_position_seconds: progress?.last_position_seconds || 0,
+                };
+              })
+            );
+
+            const modCompleted = lessonsWithProgress.filter(l => l.is_completed).length;
+            const modTotal = lessons.length;
+
+            return {
+              ...mod.toObject(),
+              lessons: lessonsWithProgress,
+              completed_lessons: modCompleted,
+              progress_percentage: modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0,
+            };
+          })
+        );
+
+        return {
+          ...course.toObject(),
+          completed_lessons: completedLessons,
+          progress_percentage: progressPct,
+          modules: modulesWithLessons, // ← yeh add hua
+        };
       })
     );
 
     // Overall progress
-    const totalLessons    = courses.reduce((s, c) => s + (c.total_lessons || 0), 0);
-    const completedTotal  = await LessonProgress.countDocuments({ enrollment_id: enrollment._id, is_completed: true });
+    const totalLessons = courses.reduce((s, c) => s + (c.total_lessons || 0), 0);
+    const completedTotal = await LessonProgress.countDocuments({ enrollment_id: enrollment._id, is_completed: true });
     const overallProgress = totalLessons > 0 ? Math.round((completedTotal / totalLessons) * 100) : 0;
 
     // Last accessed lesson
@@ -254,8 +310,8 @@ exports.completeLessonProgress = async (req, res) => {
     );
 
     // Overall enrollment progress update
-    const totalLessons    = await Lesson.countDocuments({ program_id: enrollment.program, status: "active" });
-    const completedCount  = await LessonProgress.countDocuments({ enrollment_id: enrollment._id, is_completed: true });
+    const totalLessons = await Lesson.countDocuments({ program_id: enrollment.program, status: "active" });
+    const completedCount = await LessonProgress.countDocuments({ enrollment_id: enrollment._id, is_completed: true });
     const overallProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
     await enrollment.updateOne({ progress: overallProgress });
@@ -341,9 +397,9 @@ exports.submitAssignment = async (req, res) => {
       user_id: req.user.id,
       program_id: enrollment.program,
       submission_type,
-      file_url:     file_url     || null,
+      file_url: file_url || null,
       text_content: text_content || null,
-      url_content:  url_content  || null,
+      url_content: url_content || null,
       submitted_at: new Date(),
     });
 
@@ -514,15 +570,15 @@ exports.instructorGetSessions = async (req, res) => {
 // GET /admin/v1/instructor/assignments
 exports.instructorGetAssignments = async (req, res) => {
   try {
-    const mySessions    = await LiveSession.find({ instructor_id: req.user.id }).distinct("program_id");
-    const assignments   = await Assignment.find({ program_id: { $in: mySessions }, status: "active" })
+    const mySessions = await LiveSession.find({ instructor_id: req.user.id }).distinct("program_id");
+    const assignments = await Assignment.find({ program_id: { $in: mySessions }, status: "active" })
       .sort({ due_date: 1 });
 
     const result = await Promise.all(
       assignments.map(async (a) => {
-        const total     = await Submission.countDocuments({ assignment_id: a._id });
-        const graded    = await Submission.countDocuments({ assignment_id: a._id, status: "graded" });
-        const pending   = total - graded;
+        const total = await Submission.countDocuments({ assignment_id: a._id });
+        const graded = await Submission.countDocuments({ assignment_id: a._id, status: "graded" });
+        const pending = total - graded;
         return { ...a.toObject(), total_submissions: total, graded, pending };
       })
     );
@@ -561,7 +617,7 @@ exports.instructorGradeSubmission = async (req, res) => {
       {
         points_earned,
         feedback: feedback || "",
-        status:   status || "graded",
+        status: status || "graded",
         graded_by: req.user.id,
         graded_at: new Date(),
       },
