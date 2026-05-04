@@ -95,7 +95,7 @@ const notifyContractSubmitted = ({ userId, leadName, leadId, triggeredBy }) => {
     user_id: userId,
     type: "contract_submitted",
     title: "Contract Signed ✅",
-    message: `${leadName} ne contract sign kar diya.`,
+    message: `${leadName} has signed the contract`,
     lead_id: leadId,
     triggered_by: triggeredBy,
   });

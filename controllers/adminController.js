@@ -307,65 +307,66 @@ exports.deleteAllUsers = async (req, res) => {
 //   }
 // };
 
-exports.createUser = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+// exports.createUser = async (req, res) => {
+//   try {
+//     const { name, email, password, role } = req.body;
 
-    // ✅ Duplicate check
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+//     // ✅ Duplicate check
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "User already exists" });
+//     }
 
-    // ✅ Role validation
-    const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "instructor", "instructor", "finance_manager", "user"];
-    if (role && !allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
-    }
+//     // ✅ Role validation
+//     const allowedRoles = ["super_admin", "admin", "sales_manager", "sales_rep", "support", "instructor", "instructor", "finance_manager", "user"];
+//     if (role && !allowedRoles.includes(role)) {
+//       return res.status(400).json({ message: "Invalid role" });
+//     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const avatarColor = generateColor(email);
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const avatarColor = generateColor(email);
 
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "user",
-      isVerified: true,
-      avatarColor,
-      isPlayable: false,
-      isTemporaryPassword: true
-    });
+//     const user = await User.create({
+//       name,
+//       email,
+//       password: hashedPassword,
+//       role: role || "user",
+//       isVerified: true,
+//       avatarColor,
+//       isPlayable: false,
+//       isTemporaryPassword: true
+//     });
 
-    // Send email with user credentials after creation
-    await sendEmailDynamic({
-      to: email,
-      subject: "Your Account Credentials 🔑",
-      templateName: "send-user-credentials",
-      replacements: {
-        UserName: name,
-        UserEmail: email,
-        UserPassword: password,  // Use the plain password here
-        SupportEmail: "alco@support.com",
-        YourCompanyName: "Al-and-co",
-        LoginLink: "https://alco-crm-frontend.vercel.app/login?email=" + email + "&password=" + password,
-      },
-    });
+//     // Send email with user credentials after creation
+//     await sendEmailDynamic({
+//       to: email,
+//       subject: "Your Account Credentials 🔑",
+//       templateName: "send-user-credentials",
+//       replacements: {
+//         UserName: name,
+//         UserEmail: email,
+//         UserPassword: password,  // Use the plain password here
+//         SupportEmail: "alco@support.com",
+//         YourCompanyName: "Al-and-co",
+//         LoginLink: "https://alco-crm-frontend.vercel.app/login?email=" + email + "&password=" + password,
+//       },
+//     });
 
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+//     res.status(201).json({
+//       success: true,
+//       message: "User created successfully",
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.createUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
