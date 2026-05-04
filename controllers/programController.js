@@ -15,6 +15,7 @@ exports.getPrograms = async (req, res) => {
     try {
         const programs = await Program.find({ status: "active" })
             .select("-created_by")
+            .populate("total_students") 
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -154,6 +155,7 @@ exports.adminGetPrograms = async (req, res) => {
 
         const programs = await Program.find(query)
             .populate("created_by", "name email")
+            .populate("total_students")
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(Number(limit));
