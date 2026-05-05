@@ -43,12 +43,12 @@ const paymentSchema = new mongoose.Schema(
 );
 
 // Validate: bank/cheque must have referenceNumber
-paymentSchema.pre("save", function (next) {
-  if (["bank", "cheque"].includes(this.method) && !this.referenceNumber) {
-    return next(new Error("Reference number is required for bank/cheque payments"));
-  }
-  next();
-});
+// paymentSchema.pre("save", function (next) {
+//   if (["bank", "cheque"].includes(this.method) && !this.referenceNumber) {
+//     return next(new Error("Reference number is required for bank/cheque payments"));
+//   }
+//   next();
+// });
 
 module.exports = mongoose.model("Payment", paymentSchema);
 
