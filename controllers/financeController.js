@@ -196,9 +196,146 @@ exports.markInvoicePaid = async (req, res) => {
 //   }
 // };
 
+// exports.markInstallmentPaid = async (req, res) => {
+//   try {
+//     const { invoiceId, installmentId } = req.params;
+
+//     // Find the invoice by ID
+//     const invoice = await Invoice.findById(invoiceId);
+//     if (!invoice)
+//       return res.status(404).json({ success: false, message: "Invoice not found" });
+
+//     // Find the specified installment
+//     const installment = invoice.installments.id(installmentId);
+//     if (!installment)
+//       return res.status(404).json({ success: false, message: "Installment not found" });
+
+//     // Check if the installment is already paid
+//     if (installment.status === "PAID")
+//       return res.status(400).json({ success: false, message: "Already paid" });
+
+//     const before = invoice.toObject();
+
+//     // Mark the installment as paid
+//     installment.status = "PAID";
+//     installment.paidAmount = installment.amount;
+
+//     // Recalculate invoice totals
+//     const totalPaid = invoice.installments.reduce(
+//       (sum, inst) => sum + (inst.status === "PAID" ? inst.amount : 0),
+//       0
+//     );
+//     invoice.paidAmount = totalPaid;
+//     invoice.remainingAmount = Math.max(0, invoice.totalAmount - totalPaid);
+//     invoice.status = invoice.remainingAmount === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
+
+//     await invoice.save();
+
+//     // Check if the installment is an advance payment and activate enrollment accordingly
+//     let enrollmentActivated = false;
+//     // if (installment.isAdvance) {
+//     //   const enrollment = await Enrollment.findById(invoice.enrollment);
+
+//     //   // Check if all installments are either paid or overdue
+//     //   const allInstallments = invoice.installments.map(inst => ({
+//     //     isPaid: inst.status === "PAID",
+//     //     isOverdue: inst.dueDate && new Date(inst.dueDate) < new Date() && inst.status !== "PAID"
+//     //   }));
+
+//     //   const hasOverdueInstallments = allInstallments.some(inst => inst.isOverdue);
+//     //   const allOtherInstallmentsPaid = allInstallments.every(inst => inst.isPaid || inst.isOverdue);
+
+//     //   console.log(`Advance installment paid. Enrollment ${enrollment} ${invoice.enrollment} - hasOverdue: ${hasOverdueInstallments}, allOtherPaid: ${allOtherInstallmentsPaid}`);
+
+//     //   // Activate enrollment if current installment is advance and all other conditions are met
+//     //   if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments && allOtherInstallmentsPaid) {
+//     //     enrollment.accessStatus = "ACTIVE";
+//     //     await enrollment.save();
+//     //     enrollmentActivated = true; // Set the flag to indicate activation
+//     //   }
+
+//     //   await logAudit({
+//     //     req,
+//     //     action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
+//     //     module: "finance",
+//     //     targetId: invoice.enrollment,
+//     //     after: { accessStatus: "ACTIVE" },
+//     //   });
+//     // }
+
+//     if (installment.isAdvance) {
+//       const enrollment = await Enrollment.findById(invoice.enrollment);
+
+//       // Sirf overdue installments check karo (future pending = ok)
+//       const hasOverdueInstallments = invoice.installments.some(
+//         inst =>
+//           inst.status !== "PAID" &&
+//           inst.dueDate &&
+//           new Date(inst.dueDate) < new Date()
+//       );
+
+//       console.log(
+//         `Advance paid. Enrollment: ${invoice.enrollment} | hasOverdue: ${hasOverdueInstallments}`
+//       );
+
+//       if (enrollment && enrollment.accessStatus === "RESTRICTED" && !hasOverdueInstallments) {
+//         enrollment.accessStatus = "ACTIVE";
+//         await enrollment.save();
+//         enrollmentActivated = true;
+//       }
+
+//       await logAudit({
+//         req,
+//         action: "ENROLLMENT_ACTIVATED_ADVANCE_PAID",
+//         module: "finance",
+//         targetId: invoice.enrollment,
+//         after: { accessStatus: enrollmentActivated ? "ACTIVE" : "RESTRICTED" },
+//       });
+//     }
+
+//     // Log the installment payment action
+//     await logAudit({
+//       req,
+//       action: "INSTALLMENT_MARKED_PAID",
+//       module: "finance",
+//       targetId: invoice._id,
+//       before,
+//       after: invoice.toObject(),
+//     });
+
+//     // Respond with success message and data
+//     res.json({
+//       success: true,
+//       message: enrollmentActivated ? "Installment paid — Enrollment activated!" : "Installment marked as paid",
+//       data: invoice,
+//       enrollmentActivated,
+//     });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
 exports.markInstallmentPaid = async (req, res) => {
   try {
     const { invoiceId, installmentId } = req.params;
+    const { method, referenceNumber } = req.body;
+
+    // Validate method
+    if (!method) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method is required"
+      });
+    }
+
+    // Validate referenceNumber for bank/cheque
+    if (["bank", "cheque"].includes(method) && !referenceNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Reference number is required for bank/cheque payments"
+      });
+    }
+
 
     // Find the invoice by ID
     const invoice = await Invoice.findById(invoiceId);
@@ -219,6 +356,8 @@ exports.markInstallmentPaid = async (req, res) => {
     // Mark the installment as paid
     installment.status = "PAID";
     installment.paidAmount = installment.amount;
+    installment.method = method;
+    installment.referenceNumber = referenceNumber || null;
 
     // Recalculate invoice totals
     const totalPaid = invoice.installments.reduce(
@@ -230,6 +369,22 @@ exports.markInstallmentPaid = async (req, res) => {
     invoice.status = invoice.remainingAmount === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
 
     await invoice.save();
+
+    const payment = new Payment({
+      invoice: invoice._id,
+      enrollment: invoice.enrollment,
+      user: invoice.user,
+      amount: installment.amount,
+      method: method,               // Dynamic method
+      referenceNumber: referenceNumber || null,
+      status: "approved",           // Auto approved
+      approvedBy: req.user._id,
+      approvedAt: new Date(),
+      receivedBy: req.user._id,
+      notes: `Payment for ${installment.label}`
+    });
+
+    await payment.save();
 
     // Check if the installment is an advance payment and activate enrollment accordingly
     let enrollmentActivated = false;
