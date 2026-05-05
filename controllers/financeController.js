@@ -512,8 +512,12 @@ exports.updateInstallment = async (req, res) => {
     const newTotal = invoice.installments.reduce(
       (sum, inst) => sum + (inst.amount || 0), 0
     );
-    invoice.totalAmount = newTotal;
-    invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
+    // invoice.totalAmount = newTotal;
+    invoice.remainingAmount = Math.max(
+      0,
+      invoice.totalAmount - (invoice.paidAmount || 0)
+    );
+    // invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
 
     await invoice.save();
 
@@ -556,12 +560,38 @@ exports.addInstallment = async (req, res) => {
       paidAmount: 0,
     });
 
-    // Recalculate totalAmount
-    const newTotal = invoice.installments.reduce(
-      (sum, inst) => sum + (inst.amount || 0), 0
+    // // Recalculate totalAmount
+    // const newTotal = invoice.installments.reduce(
+    //   (sum, inst) => sum + (inst.amount || 0), 0
+    // );
+    // // invoice.totalAmount = newTotal;
+    // // ❌ totalAmount ko touch nahi karna
+
+    // // ✅ sirf remaining update karo
+    // invoice.remainingAmount = Math.max(
+    //   0,
+    //   invoice.totalAmount - (invoice.paidAmount || 0)
+    // );
+    // // invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
+
+    // ✅ VALIDATION YAHAN
+    const totalInstallments = invoice.installments.reduce(
+      (sum, i) => sum + (i.amount || 0),
+      0
     );
-    invoice.totalAmount = newTotal;
-    invoice.remainingAmount = Math.max(0, newTotal - (invoice.paidAmount || 0));
+
+    if (totalInstallments > invoice.totalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "Installments exceed invoice total"
+      });
+    }
+
+    // ✅ remaining update
+    invoice.remainingAmount = Math.max(
+      0,
+      invoice.totalAmount - (invoice.paidAmount || 0)
+    );
 
     await invoice.save();
 
