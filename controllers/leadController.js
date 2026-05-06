@@ -430,10 +430,110 @@ const Program = require("../models/programModel.js");
 // --------------------24/4/2026--------------------
 
 // ─── createLead (program form se) ────────────────────────────
+// exports.createLead = async (req, res) => {
+//     try {
+//         const email = req.body.email?.toLowerCase().trim();
+//         const { first_name, last_name, program_id } = req.body;
+
+//         if (!email || !first_name || !program_id) {
+//             return res.status(400).json({
+//                 message: "Email, first name and program are required",
+//             });
+//         }
+
+//         // ── Step 1: User check ──────────────────────────────────
+//         const existingUser = await User.findOne({ email });
+
+//         if (existingUser) {
+//             // Same program pe duplicate check
+//             const existingLead = await Lead.findOne({ email, program_id });
+
+//             if (existingLead) {
+//                 return res.status(200).json({
+//                     success: true,
+//                     duplicate: true,
+//                     message: "Thank you for your interest! We already have your application and will contact you soon. 😊",
+//                 });
+//             }
+
+//             // ✅ Alag program — lead banao + existingUser ka _id lagao
+//             const lead = await Lead.create({
+//                 ...req.body,
+//                 email,
+//                 user_id: existingUser._id, // ← existing user ka id
+//                 created_by: req.user?.id || null,
+//             });
+
+//             return res.status(201).json({
+//                 success: true,
+//                 duplicate: false,
+//                 message: "Thank you for applying! We'll be in touch soon. 😊",
+//                 data: lead,
+//             });
+//         }
+
+//         // ── Step 2: Naya user banao ─────────────────────────────
+//         const plainPassword = Math.random().toString(36).slice(-8);
+//         const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+//         const newUser = await User.create({
+//             name: `${first_name} ${last_name || ""}`.trim(),
+//             email,
+//             phone: req.body.phone || null,
+//             password: hashedPassword,
+//             role: "user",
+//             isVerified: true,
+//             isActive: true,
+//             avatarColor: generateColor(email),
+//             isTemporaryPassword: true,
+//         });
+
+//         // ── Step 3: Lead banao + newUser ka _id lagao ───────────
+//         const lead = await Lead.create({
+//             ...req.body,
+//             email,
+//             user_id: newUser._id, // ← naya bana user ka id
+//             created_by: req.user?.id || null,
+//         });
+
+//         // ── Step 4: Credentials email bhejo ────────────────────
+//         await sendEmailDynamic({
+//             to: email,
+//             subject: "Your Account Credentials 🔑",
+//             templateName: "send-user-credentials",
+//             replacements: {
+//                 UserName: `${first_name} ${last_name || ""}`,
+//                 UserEmail: email,
+//                 UserPassword: plainPassword,
+//                 SupportEmail: "alco@support.com",
+//                 YourCompanyName: "Al-and-co",
+//                 LoginLink: `https://alco-crm-frontend.vercel.app/login?email=${email}&password=${plainPassword}`,
+//             },
+//         });
+
+//         return res.status(201).json({
+//             success: true,
+//             duplicate: false,
+//             message: "Thank you for applying! Check your email for login details. 😊",
+//             data: lead,
+//         });
+
+//     } catch (error) {
+//         if (error.code === 11000) {
+//             return res.status(200).json({
+//                 success: true,
+//                 duplicate: true,
+//                 message: "Thank you! We already have your details. 😊",
+//             });
+//         }
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 exports.createLead = async (req, res) => {
     try {
         const email = req.body.email?.toLowerCase().trim();
-        const { first_name, last_name, program_id } = req.body;
+        const { first_name, last_name, program_id, opportunity_value: _, ...rest } = req.body;
 
         if (!email || !first_name || !program_id) {
             return res.status(400).json({
@@ -441,11 +541,28 @@ exports.createLead = async (req, res) => {
             });
         }
 
-        // ── Step 1: User check ──────────────────────────────────
+        // ── Auto opportunity_value from program price ──────────
+        let opportunity_value = 0;
+        if (program_id) {
+            const program = await Program.findById(program_id).select("price");
+            if (program?.price) opportunity_value = program.price;
+        }
+
+        // ── Base lead data ─────────────────────────────────────
+        const leadData = {
+            first_name,
+            last_name,
+            program_id,
+            ...rest,
+            email,
+            opportunity_value,
+            created_by: req.user?.id || null,
+        };
+
+        // ── Step 1: User check ─────────────────────────────────
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            // Same program pe duplicate check
             const existingLead = await Lead.findOne({ email, program_id });
 
             if (existingLead) {
@@ -456,12 +573,9 @@ exports.createLead = async (req, res) => {
                 });
             }
 
-            // ✅ Alag program — lead banao + existingUser ka _id lagao
             const lead = await Lead.create({
-                ...req.body,
-                email,
-                user_id: existingUser._id, // ← existing user ka id
-                created_by: req.user?.id || null,
+                ...leadData,
+                user_id: existingUser._id,
             });
 
             return res.status(201).json({
@@ -472,14 +586,14 @@ exports.createLead = async (req, res) => {
             });
         }
 
-        // ── Step 2: Naya user banao ─────────────────────────────
+        // ── Step 2: Naya user banao ────────────────────────────
         const plainPassword = Math.random().toString(36).slice(-8);
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
         const newUser = await User.create({
             name: `${first_name} ${last_name || ""}`.trim(),
             email,
-            phone: req.body.phone || null,
+            phone: rest.phone || null,
             password: hashedPassword,
             role: "user",
             isVerified: true,
@@ -488,15 +602,13 @@ exports.createLead = async (req, res) => {
             isTemporaryPassword: true,
         });
 
-        // ── Step 3: Lead banao + newUser ka _id lagao ───────────
+        // ── Step 3: Lead banao ─────────────────────────────────
         const lead = await Lead.create({
-            ...req.body,
-            email,
-            user_id: newUser._id, // ← naya bana user ka id
-            created_by: req.user?.id || null,
+            ...leadData,
+            user_id: newUser._id,
         });
 
-        // ── Step 4: Credentials email bhejo ────────────────────
+        // ── Step 4: Credentials email bhejo ───────────────────
         await sendEmailDynamic({
             to: email,
             subject: "Your Account Credentials 🔑",
