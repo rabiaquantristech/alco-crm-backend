@@ -821,19 +821,82 @@ exports.getLeadById = async (req, res) => {
 //         res.status(500).json({ message: error.message });
 //     }
 // };
+// exports.updateLead = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+
+//         const oldLead = await Lead.findById(id);
+//         if (!oldLead) {
+//             return res.status(404).json({ message: "Lead not found" });
+//         }
+
+//         const updated = await Lead.findByIdAndUpdate(
+//             id,
+//             req.body,
+//             { returnDocument: "after", runValidators: true }
+//         );
+
+//         console.log("OLD LEAD:", oldLead);
+//         console.log("UPDATED LEAD:", updated);
+
+//         // ✅ Status change check
+//         if (
+//             req.body.status &&
+//             oldLead.status !== req.body.status &&
+//             updated.user_id
+//         ) {
+//             // 1. In-app notification
+//             await notifyStatusChanged({
+//                 userId: updated.user_id.toString(),
+//                 leadName: `${updated.first_name} ${updated.last_name}`,
+//                 leadId: updated._id.toString(),
+//                 newStatus: req.body.status,
+//                 changedBy: req.user?._id?.toString(),
+//             });
+
+//             // 2. Email — user ka email fetch karo
+//             const user = await User.findById(updated.user_id).select("email name");
+//             if (user?.email) {
+//                 await sendEmailDynamic({
+//                     to: user.email,
+//                     subject: "Your Request Has Been Updated 🔄",
+//                     templateName: "lead-status-update",
+//                     replacements: {
+//                         UserName: user.name || updated.first_name,
+//                         NewStatus: req.body.status,
+//                         LeadName: `${updated.first_name} ${updated.last_name}`,
+//                         SupportEmail: "alco@support.com",
+//                         YourCompanyName: "Al-and-co",
+//                     },
+//                 });
+//             }
+//         }
+
+//         res.json({ success: true, data: updated });
+
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 exports.updateLead = async (req, res) => {
     try {
         const { id } = req.params;
+
+        const payload = { ...req.body };
 
         const oldLead = await Lead.findById(id);
         if (!oldLead) {
             return res.status(404).json({ message: "Lead not found" });
         }
 
+        if (payload.batch_id === "") payload.batch_id = null;
+        if (payload.program_id === "") payload.program_id = null;
+        if (payload.assigned_to === "") payload.assigned_to = null;
+
         const updated = await Lead.findByIdAndUpdate(
             id,
-            req.body,
-            { returnDocument: "after", runValidators: true }
+            payload,
+             { new: true, runValidators: true }
         );
 
         console.log("OLD LEAD:", oldLead);
