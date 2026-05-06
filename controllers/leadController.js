@@ -893,10 +893,22 @@ exports.updateLead = async (req, res) => {
         if (payload.program_id === "") payload.program_id = null;
         if (payload.assigned_to === "") payload.assigned_to = null;
 
+        // 🔥 PROGRAM CHANGE LOGIC
+        if (
+            payload.program_id &&
+            payload.program_id !== oldLead.program_id?.toString()
+        ) {
+            const program = await Program.findById(payload.program_id);
+
+            if (program) {
+                payload.opportunity_value = program.price || 0;
+            }
+        }
+
         const updated = await Lead.findByIdAndUpdate(
             id,
             payload,
-             { new: true, runValidators: true }
+            { new: true, runValidators: true }
         );
 
         console.log("OLD LEAD:", oldLead);
